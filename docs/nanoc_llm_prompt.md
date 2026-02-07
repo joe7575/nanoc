@@ -1,0 +1,183 @@
+# NanoC Code Generation Prompt
+
+You are generating code for **NanoC**, a simple C-like language for embedded systems.
+
+## CRITICAL RULES
+
+1. Use `func` keyword for ALL functions, NOT `void`
+2. Use `//` for comments, NOT `/* */` or `rem`
+3. Use `{ }` for blocks, NOT `begin/end`
+4. Use `==` for equality, `!=` for inequality
+5. Keywords are lowercase: `func`, `int32`, `return`, `if`, `else`, `for`, `while`
+6. String variables MUST end with `$`: `name$`, `text$`
+7. No semicolons at end of statements
+8. No floating-point - integers only (int32)
+
+## FORBIDDEN - NEVER USE
+
+- `goto`, `gosub` - use `func` instead
+- `void` - use `func` without return type
+- `let`, `dim` - use `int32`, `str8`
+- `rem` - use `//
+- `then`, `endif`, `loop`, `next` - use `{ }`
+- `data`, `read`, `restore`
+- `get1`, `get2`, `get4`, `set1`, `set2`, `set4` - use `u8`, `u16`, `u32`
+
+## SYNTAX REFERENCE
+
+### Variable Declarations
+```c
+int32 x = 0           // signed 32-bit integer
+int32 arr[100]        // array of 100 elements
+str8 name$ = "Hello"  // string (must end with $)
+const MAX = 100       // compile-time constant
+```
+
+### Array References (C-style)
+Array names without `[]` are passed as references (like C pointers):
+```c
+int32 src[10]
+int32 dst[10]
+copy(src, 0, dst, 0, 40)  // Copy 40 bytes
+```
+
+### Functions
+```c
+// Void function (no return value)
+func my_handler(int32 param) {
+    printf("param=%d\n", param)
+}
+
+// Function with return value
+func int32 add(int32 a, int32 b) {
+    return a + b
+}
+
+// Call in expression
+int32 result = add(10, 20)
+
+// Call as statement (return value ignored)
+my_handler(42)
+```
+
+### Control Structures
+```c
+// if-else
+if (x > 0) {
+    y = 1
+} else {
+    y = 0
+}
+
+// for loop
+for i = 1 to 10 {
+    printf("%d\n", i)
+}
+
+for i = 10 to 0 step -1 {
+    printf("%d\n", i)
+}
+
+// while loop
+while (x > 0) {
+    x--
+}
+```
+
+### Operators
+```
+Arithmetic: + - * / % (or mod)
+Bitwise:    & | ^
+Comparison: == != < <= > >=
+Logical:    and or not
+Increment:  ++ --
+```
+
+### Output
+```c
+printf("Value: %d\n", x)      // %d=int, %s=string, %x=hex
+printf("Name: %s\n", name$)   // string output
+```
+
+### String Functions
+```c
+len(s$)                    // length
+left$(s$, n)               // first n chars
+right$(s$, n)              // last n chars
+mid$(s$, start, len)       // substring (0-based)
+str$(n)                    // int to string
+hex$(n)                    // int to hex string
+instr(start, s$, find$)    // find substring (0-based, -1 if not found)
+string$(n, char$)          // repeat first char n times
+```
+
+**Note:** `mid$` and `instr` use 0-based indexing (like C).
+
+### Byte Access (array memory)
+```c
+u8(arr, offset)            // read byte
+u8(arr, offset, value)     // write byte
+u16(arr, offset)           // read 16-bit
+u16(arr, offset, value)    // write 16-bit
+u32(arr, offset)           // read 32-bit
+u32(arr, offset, value)    // write 32-bit
+```
+
+### Other
+```c
+rnd(n)                     // random 0 to n-1
+copy(src, soff, dst, doff, len)  // copy bytes (arrays as refs)
+end                        // terminate program
+reti                       // return from interrupt handler
+NULL                       // null pointer constant
+```
+
+## PROGRAM STRUCTURE
+
+```c
+// 1. Function definitions FIRST (before main code)
+func int32 helper(int32 x) {
+    return x * 2
+}
+
+func process(int32 data) {
+    int32 result = helper(data)
+    printf("Result: %d\n", result)
+}
+
+// 2. Global variables
+int32 counter = 0
+int32 buffer[100]
+
+// 3. Main program code
+printf("Starting...\n")
+process(42)
+counter++
+printf("Counter: %d\n", counter)
+end
+```
+
+## LOCAL vs GLOBAL VARIABLES
+
+- Variables declared **outside** functions = GLOBAL
+- Variables declared **inside** functions = LOCAL (stack-based, reentrant)
+- Parameters are always LOCAL
+
+```c
+int32 global_var = 0    // GLOBAL
+
+func example(int32 param) {    // param is LOCAL
+    int32 local_var = 10       // LOCAL
+    global_var = param         // access GLOBAL
+}
+```
+
+## LIMITATIONS
+
+- Variable names: max 9 chars
+- Line length: max 127 chars
+- Nested calls: max 8 levels
+- Parameters: max 8 per function
+- No float/double
+- No multi-dim arrays
+- `arr[i]++` not supported, use `arr[i] = arr[i] + 1`
