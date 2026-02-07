@@ -107,7 +107,6 @@ static void compile_str8_var(void);
 static void compile_int32_decl(void);
 static void compile_arr_access(void);
 static void compile_printf(void);
-static void compile_string(void);
 static void compile_end(void);
 static type_t compile_xfunc(uint8_t type);
 static void compile_break(void);
@@ -1115,17 +1114,6 @@ static void compile_printf(void) {
     pCi->p_code[pCi->pc++] = fmt_len;
     strcpy((char*)&pCi->p_code[pCi->pc], fmt_buf);
     pCi->pc += fmt_len;
-}
-
-static void compile_string(void) {
-    match(STR);
-    // push string address
-    uint16_t len = strlen(pCi->a_buff);
-    pCi->a_buff[len - 1] = '\0';
-    pCi->p_code[pCi->pc++] = k_PUSH_STR_Nx;
-    pCi->p_code[pCi->pc++] = len - 1; // without quotes but with 0
-    strcpy((char*)&pCi->p_code[pCi->pc], pCi->a_buff + 1);
-    pCi->pc += len - 1;
 }
 
 static void compile_end(void) {
