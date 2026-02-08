@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     if (!compile_only) {
-        nc_print("NanoC Compiler V1.0\n");
+        nc_print("NanoC Compiler V%s\n", SVERSION);
     }
     nc_init();
 #if defined(cfg_DATA_ACCESS) && !defined(cfg_STRING_SUPPORT)

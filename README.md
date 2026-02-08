@@ -32,13 +32,6 @@ This software is written from scratch in C.
     // Output
     printf("value = %d, hex = %h, str = %s\n", num, num, str)
 
-    // Labels and jumps
-    gosub label
-    goto label
-    label:
-        ...
-    return
-
     // Operators
     &&, ||, !=, ==, <, >, <=, >=
     +, -, *, /, mod
@@ -51,7 +44,7 @@ This software is written from scratch in C.
 Data processing features (optional):
 
 ```
-    get1, get2, get4, set1, set2, set4, copy, ref, reti
+    u8, u16, u32, copy
 ```
 
 Supported data types are:

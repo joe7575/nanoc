@@ -240,19 +240,6 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
 
     while(cycles-- > 1)
     {
-#ifndef NBS_PRODUCTION_BUILD
-        if(vm->trace_on) {
-#ifdef cfg_TRACE_SUPPORT        
-            uint16_t lineno = vm->trace[pc];
-            if(lineno > 0) {
-                nc_print("[%u] ", lineno);
-            }
-#else
-            nc_print("[%04X] ", pc);
-#endif
-        }
-#endif
-
         switch (code[pc])
         {
         case k_END:
