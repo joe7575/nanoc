@@ -76,7 +76,7 @@ typedef struct {
     bool     in_func;                // True if compiling inside a function
     uint8_t  local_var_count;        // Number of local variables in current function
     uint16_t local_var_start_idx;    // Symbol table index where local vars start
-    uint8_t  func_return_type;       // Return type of current function (0=void, INT32, STR8)
+    uint8_t  func_return_type;       // Return type of current function (0=void, NC_INT32, STR8)
     jmp_buf  jmp_buf;
 } comp_inst_t;
 
@@ -147,7 +147,7 @@ static type_t compile_factor(void);
 *************************************************************************************************/
 void nc_init(void) {
     // Add keywords - C-style types
-    sym_add("int32", 0, INT32);
+    sym_add("int32", 0, NC_INT32);
     sym_add("str8", 0, STR8);
     sym_add("func", 0, FUNC);
     sym_add("return", 0, RET);
@@ -177,12 +177,11 @@ void nc_init(void) {
     sym_add("mid$", 0, MIDS);
     sym_add("len", 0, LEN);
     sym_add("str$", 0, STRS);
-    sym_add("spc", 0, SPC);
     sym_add("hex$", 0, HEXS);
     sym_add("NULL", 0, NIL);
     sym_add("string$", 0, STRINGS);
 #endif
-    sym_add("const", 0, CONST);
+    sym_add("const", 0, NC_CONST);
     sym_add("instr", 0, INSTR);
     sym_add("free", 0, FREE);
     sym_add("rnd", 0, RND);
@@ -293,7 +292,7 @@ void nc_output_symbol_table(void *pv_vm) {
         if(a_Symbol[i].name[0] != '\0' && a_Symbol[i].type != LABEL)
         {
             nc_print("%2u: %-8s  %s\n", idx++, 
-                (a_Symbol[i].type == ID) ? "(number)" : (a_Symbol[i].type == SID) ? "(string)" : 
+                (a_Symbol[i].type == ID) ? "(number)" : (a_Symbol[i].type == STRID) ? "(string)" : 
                         (a_Symbol[i].type == e_CNST) ? "(const)": "(array)",
                 a_Symbol[i].name);
         }
@@ -395,7 +394,7 @@ static uint8_t next_token(void) {
     }
     if(isalpha((int8_t)pCi->a_buff[0]) || pCi->a_buff[0] == '_') {
         uint16_t len = strlen(pCi->a_buff);
-        uint8_t type = pCi->a_buff[len - 1] == '$' ? SID : ID;
+        uint8_t type = pCi->a_buff[len - 1] == '$' ? STRID : ID;
 
         pCi->sym_idx = sym_add(pCi->a_buff, CurrVarIdx, type);
         return a_Symbol[pCi->sym_idx].type;
@@ -561,16 +560,16 @@ static void compile_stmt(void) {
     switch(tok) {
     case FOR: compile_for(); break;
     case IF: compile_if(); break;
-    case INT32: compile_int32_decl(); break;
+    case NC_INT32: compile_int32_decl(); break;
     case STR8: compile_str8_var(); break;
     case FUNC: compile_func(); break;
     case RET: compile_return(); break;
     case ID: compile_var(tok); break;
     case LABEL: compile_var(ID); break;  // Function call: func(args)
-    case SID: compile_var(tok); break;
+    case STRID: compile_var(tok); break;
     case ARR: compile_arr_access(); break;
     case PRINTF: compile_printf(); break;
-    case CONST: compile_const(); break;
+    case NC_CONST: compile_const(); break;
     case WHILE: compile_while(); break;
     case END: compile_end(); break;
     case XFUNC: compile_xfunc(e_NONE); break;
@@ -711,7 +710,7 @@ static void compile_var(uint8_t tok) {
         match('(');
         next_tok = lookahead();
         while(next_tok != ')') {
-            compile_expression(e_NUM);
+            compile_expression(e_ANY);  // Accept any type (e_NUM, e_STR, e_REF)
             pCi->p_code[pCi->pc++] = k_PUSH_PARAM_N1;
             param_count++;
             next_tok = lookahead();
@@ -765,7 +764,7 @@ static void compile_var(uint8_t tok) {
         return;
     }
 
-    if(tok == SID) { // str8 a = "string"
+    if(tok == STRID) { // str8 a = "string"
         match(EQ);
         compile_expression(e_STR);
         pCi->p_code[pCi->pc++] = k_POP_STR_N2;  // Strings always global for now
@@ -796,13 +795,13 @@ static void compile_var(uint8_t tok) {
 */
 static void compile_str8_var(void) {
     uint8_t tok = next();
-    if(tok != SID) {
+    if(tok != STRID) {
         error("string identifier (ending with $) expected", pCi->a_buff);
         return;
     }
     uint16_t idx = pCi->sym_idx;
     // Mark this variable as string type
-    a_Symbol[idx].type = SID;
+    a_Symbol[idx].type = STRID;
     match(EQ);
     compile_expression(e_STR);
     pCi->p_code[pCi->pc++] = k_POP_STR_N2;
@@ -844,44 +843,21 @@ static void compile_int32_decl(void) {
 */
 static void compile_arr_access(void) {
     uint16_t idx = pCi->sym_idx;
+    bool arr_is_local = a_Symbol[idx].is_local;
+    
+    // For local arrays, push address first (before index)
+    if(arr_is_local) {
+        pCi->p_code[pCi->pc++] = k_PUSH_LOCAL_N2;
+        pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    }
+    
     match(LBRACKET);
     compile_expression(e_NUM);
     match(RBRACKET);
     
     uint8_t tok = lookahead();
     if(tok == INC) {
-        // arr[idx]++ expands to: arr[idx] = arr[idx] + 1
         match(INC);
-        // Stack has: idx
-        // Duplicate index on stack for get and set
-        pCi->p_code[pCi->pc++] = k_PUSH_NUM_N2;
-        pCi->p_code[pCi->pc++] = 1;
-        // Now we need: get arr[idx], add 1, set arr[idx]
-        // But we need to duplicate the index first
-        // Simpler: generate code that reads, increments, writes
-        // Push index again (it's on stack), get element, add 1, set element
-        // Actually the index is consumed by get, so we need a different approach:
-        // We compile: arr[idx] = arr[idx] + 1 inline
-        // The index is already on stack, we need to:
-        // 1. Duplicate index (we don't have DUP opcode, so emit expression again)
-        // For now, a simpler approach: read element, add 1, store back
-        // This requires the index to be evaluated twice - we can't easily do that
-        // Let's use a different approach: generate the expansion at the bytecode level
-        // Stack: [idx]
-        // Get element: k_GET_ARR_ELEM_N2 (consumes idx, pushes value)
-        // Add 1: k_PUSH_NUM_N2 1, k_ADD_N1
-        // But then we need idx again for SET...
-        // The solution is to re-compile the index expression - but we already consumed it.
-        // For v1, let's require simpler cases or use a workaround:
-        // We emit the index twice during parsing. But index is already compiled.
-        // Alternative: We need a DUP instruction or redo the index.
-        // KISS: Error for now, or use expansion in source only
-        // Actually, since compile_expression already emitted code for index,
-        // we need to emit code BEFORE the index to duplicate it later.
-        // This is tricky. Let's implement a simpler version:
-        // For arr[const]++, we can just emit the const twice.
-        // For general case, we'd need DUP opcode.
-        // For now, emit the full expansion pattern:
         error("a[i]++ not yet supported, use a[i] = a[i] + 1", NULL);
         return;
     }
@@ -893,8 +869,15 @@ static void compile_arr_access(void) {
     
     match(EQ);
     compile_expression(e_NUM);
-    pCi->p_code[pCi->pc++] = k_SET_ARR_ELEM_N2;
-    pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    
+    if(arr_is_local) {
+        // Stack: [addr, idx, val] -> k_SET_ARR_ELEM_S_N1
+        pCi->p_code[pCi->pc++] = k_SET_ARR_ELEM_S_N1;
+    } else {
+        // Stack: [idx, val] -> k_SET_ARR_ELEM_N2 var
+        pCi->p_code[pCi->pc++] = k_SET_ARR_ELEM_N2;
+        pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    }
 }
 
 /*
@@ -914,7 +897,7 @@ static void compile_func(void) {
     pCi->p_code[pCi->pc++] = 0;
     
     // Check if first token is a return type (int32, str8) or function name (ID)
-    if(tok == INT32 || tok == STR8) {
+    if(tok == NC_INT32 || tok == STR8) {
         return_type = tok;
         tok = next();  // Now get the function name
     }
@@ -940,27 +923,43 @@ static void compile_func(void) {
     
     // Parse parameters - they become local variables
     uint8_t param_indices[8];
+    uint8_t param_types[8];  // Store parameter types (NC_INT32, STR8, ARR)
     uint8_t param_count = 0;
     
     tok = lookahead();
     while(tok != ')' && param_count < 8) {
-        // Expect type (int32, str8, etc.)
-        if(tok != INT32 && tok != STR8) {
+        // Expect type (int32, str8, or int32[] for array ref)
+        if(tok != NC_INT32 && tok != STR8) {
             error("type expected", pCi->a_buff);
             return;
         }
+        uint8_t param_type = tok;
         match(tok);
         
-        // Expect parameter name
-        tok = next();
-        if(tok != ID && tok != SID) {
+        // Check for [] after int32 (array reference parameter)
+        tok = lookahead();
+        if(param_type == NC_INT32 && tok == LBRACKET) {
+            match(LBRACKET);
+            match(RBRACKET);
+            param_type = ARR;  // Mark as array reference
+            tok = lookahead();  // Get the parameter name token
+        }
+        
+        // Expect parameter name (tok is already from lookahead)
+        if(tok != ID && tok != STRID) {
             error("parameter name expected", pCi->a_buff);
             return;
         }
+        match(tok);  // Consume the parameter name
         // Mark as local variable with stack offset
         a_Symbol[pCi->sym_idx].is_local = 1;
         a_Symbol[pCi->sym_idx].value = pCi->local_var_count;
+        // Set type: ARR for array refs, ID for int32, STRID for str8
+        if(param_type == ARR) {
+            a_Symbol[pCi->sym_idx].type = ARR;
+        }
         param_indices[param_count] = pCi->sym_idx;
+        param_types[param_count] = param_type;
         param_count++;
         pCi->local_var_count++;
         
@@ -979,7 +978,8 @@ static void compile_func(void) {
     pCi->p_code[pCi->pc++] = 0;  // Will be patched with final local_var_count
     
     // Generate code to pop parameters from param stack into local variables
-    for(uint8_t i = 0; i < param_count; i++) {
+    // Pop in reverse order because param stack is LIFO
+    for(int8_t i = param_count - 1; i >= 0; i--) {
         pCi->p_code[pCi->pc++] = k_PARAM_N1;
         pCi->p_code[pCi->pc++] = k_POP_LOCAL_N2;
         pCi->p_code[pCi->pc++] = a_Symbol[param_indices[i]].value;
@@ -1045,7 +1045,7 @@ static void compile_return(void) {
             error("void function cannot return value", NULL);
             return;
         }
-        type_t expected = (pCi->func_return_type == INT32) ? e_NUM : e_STR;
+        type_t expected = (pCi->func_return_type == NC_INT32) ? e_NUM : e_STR;
         compile_expression(expected);
         // Value is on stack - LEAVE will save it to ret_val register
     } else {
@@ -1264,7 +1264,7 @@ static void compile_free(void) {
 ** Add symbol to symbol table
 ** id = symbol name
 ** val = value (in case of variable the index to vm->variables)
-** type = type of symbol (ID, SID, ARR, LABEL)
+** type = type of symbol (ID, STRID, ARR, LABEL)
 */
 static uint16_t sym_add(char *id, uint32_t val, uint8_t type) {
     uint16_t start = 0;
@@ -1686,21 +1686,39 @@ static type_t compile_factor(void) {
         break;
     case ARR: // array access or reference
         val = a_Symbol[pCi->sym_idx].value;
-        match(ARR);
-        tok = lookahead();
-        if(tok == LBRACKET) {
-            // arr[idx] - element access
-            match(LBRACKET);
-            compile_expression(e_NUM);
-            match(RBRACKET);
-            pCi->p_code[pCi->pc++] = k_GET_ARR_ELEM_N2;
-            pCi->p_code[pCi->pc++] = val;
-            type = e_NUM;
-        } else {
-            // arr without [] - return reference (like C)
-            pCi->p_code[pCi->pc++] = k_PUSH_VAR_N2;
-            pCi->p_code[pCi->pc++] = val;
-            type = e_REF;
+        {
+            bool arr_is_local = a_Symbol[pCi->sym_idx].is_local;
+            match(ARR);
+            tok = lookahead();
+            if(tok == LBRACKET) {
+                // arr[idx] - element access
+                if(arr_is_local) {
+                    // Local array: push addr from stack, then idx, then stack-based get
+                    pCi->p_code[pCi->pc++] = k_PUSH_LOCAL_N2;
+                    pCi->p_code[pCi->pc++] = val;
+                    match(LBRACKET);
+                    compile_expression(e_NUM);
+                    match(RBRACKET);
+                    pCi->p_code[pCi->pc++] = k_GET_ARR_ELEM_S_N1;
+                } else {
+                    // Global array: use variable-indexed opcode
+                    match(LBRACKET);
+                    compile_expression(e_NUM);
+                    match(RBRACKET);
+                    pCi->p_code[pCi->pc++] = k_GET_ARR_ELEM_N2;
+                    pCi->p_code[pCi->pc++] = val;
+                }
+                type = e_NUM;
+            } else {
+                // arr without [] - return reference (like C)
+                if(arr_is_local) {
+                    pCi->p_code[pCi->pc++] = k_PUSH_LOCAL_N2;
+                } else {
+                    pCi->p_code[pCi->pc++] = k_PUSH_VAR_N2;
+                }
+                pCi->p_code[pCi->pc++] = val;
+                type = e_REF;
+            }
         }
         break;
 #ifdef cfg_DATA_ACCESS
@@ -1743,8 +1761,8 @@ static type_t compile_factor(void) {
         pCi->pc += len - 1;
         type = e_STR;
         break;
-    case SID: // string variable, like A$
-        match(SID);
+    case STRID: // string variable, like A$
+        match(STRID);
         pCi->p_code[pCi->pc++] = k_PUSH_VAR_N2;
         pCi->p_code[pCi->pc++] = a_Symbol[pCi->sym_idx].value;
         type = e_STR;
@@ -1854,7 +1872,7 @@ static type_t compile_factor(void) {
             // Push arguments to parameter stack
             tok = lookahead();
             while(tok != ')') {
-                compile_expression(e_NUM);
+                compile_expression(e_ANY);  // Accept any type (e_NUM, e_STR, e_REF)
                 pCi->p_code[pCi->pc++] = k_PUSH_PARAM_N1;
                 tok = lookahead();
                 if(tok == ',') {

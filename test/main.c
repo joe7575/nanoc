@@ -25,8 +25,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include <ctype.h>
 #include <assert.h>
 #include <time.h>
-#include <errno.h>
 #include <stdarg.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <errno.h>
+#endif
 #include "nc.h"
 #include "nc_int.h"
 #include "nc_kvstore.h"
@@ -44,6 +48,10 @@ static uint16_t on_can_addr = 0;
 /* msleep(): Sleep for the requested number of milliseconds. */
 int msleep(uint32_t msec)
 {
+#ifdef _WIN32
+    Sleep(msec);
+    return 0;
+#else
     struct timespec ts;
     int res;
 
@@ -54,6 +62,7 @@ int msleep(uint32_t msec)
         res = nanosleep(&ts, &ts);
     } while (res && errno == EINTR);
     return res;
+#endif
 }
 
 char *nc_get_code_line(void *fp, char *line, int max_line_len) {
@@ -102,9 +111,9 @@ int main(int argc, char* argv[]) {
     assert(nc_define_external_function("send", 3, (uint8_t[]){NB_NUM, NB_NUM, NB_REF}, NB_NONE) == NB_XFUNC + 0);
 #elif defined(cfg_STRING_SUPPORT)
     assert(nc_define_external_function("setcur", 2, (uint8_t[]){NB_NUM, NB_NUM}, NB_NONE) == NB_XFUNC + 0);
-    assert(nc_define_external_function("clrscr", 0, (uint8_t[]){}, NB_NONE) == NB_XFUNC + 1);
+    assert(nc_define_external_function("clrscr", 0, NULL, NB_NONE) == NB_XFUNC + 1);
     assert(nc_define_external_function("clrline", 1, (uint8_t[]){NB_NUM}, NB_NONE) == NB_XFUNC + 2);
-    assert(nc_define_external_function("time", 0, (uint8_t[]){}, NB_NUM) == NB_XFUNC + 3);
+    assert(nc_define_external_function("time", 0, NULL, NB_NUM) == NB_XFUNC + 3);
     assert(nc_define_external_function("sleep", 1, (uint8_t[]){NB_NUM}, NB_NONE) == NB_XFUNC + 4);
     assert(nc_define_external_function("input", 1, (uint8_t[]){NB_STR}, NB_NUM) == NB_XFUNC + 5);
     assert(nc_define_external_function("input$", 1, (uint8_t[]){NB_STR}, NB_STR) == NB_XFUNC + 6);

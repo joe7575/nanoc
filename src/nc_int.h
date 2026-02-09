@@ -35,12 +35,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 // Opcode definitions
 enum {
     k_END,                // End of programm
-    k_PRINT_STR_N1,       // (pop addr from stack)
-    k_PRINT_VAL_N1,       // (pop value from stack)
-    k_PRINT_NEWL_N1,      // 
-    k_PRINT_TAB_N1,       // 
-    k_PRINT_SPACE_N1,     // 
-    k_PRINT_BLANKS_N1,    // (function spc)
     k_PUSH_STR_Nx,        // nn S T R I N G 00 (push string address (16 bit))
     k_PUSH_NUM_N5,        // (push 4 byte const value)
     k_PUSH_NUM_N2,        // (push 1 byte const value)     
@@ -49,8 +43,6 @@ enum {
     k_POP_STR_N2,         // (pop variable)
     k_DIM_ARR_N2,         // (pop variable, pop size)
     k_BREAK_INSTR_N3,     // (break with line number)
-    k_TRON_N1,            // (trace on)
-    k_TROFF_N1,           // (trace off)
     k_ADD_N1,             // (add two values from stack)
     k_SUB_N1,             // (sub two values from stack)
     k_MUL_N1,             // (mul two values from stack)
@@ -71,16 +63,10 @@ enum {
     k_GREATER_EQU_N1,     // (compare two values from stack)
     k_GOTO_N3,            // (16 bit programm address)
     k_GOSUB_N3,           // (16 bit programm address)
-    k_RETURN_N1,          // (pop return address)
     k_RETI_N1,            // (return from interrupt)
     k_FOR_N1,             // (check stack overflow)
     k_NEXT_N4,            // (16 bit programm address), (variable)
     k_IF_N3,              // (pop val, END address)
-    k_READ_NUM_N1,        // (read const value from DATA section)
-    k_READ_STR_N1,        // (read string address from DATA section)
-    k_RESTORE_N1,         // (restore the data read pointer)
-    k_ON_GOTO_N2,         // (on...goto with last number)
-    k_ON_GOSUB_N2,        // (on...gosub with last number)
     k_SET_ARR_ELEM_N2,    // (set array element)
     k_GET_ARR_ELEM_N2,    // (get array element)
     k_SET_ARR_1BYTE_N2,   // (array: set one byte)
@@ -94,7 +80,6 @@ enum {
     k_PARAMS_N1,          // (pop and push string address)
     k_XFUNC_N2,           // (external function call)
     k_PUSH_PARAM_N1,      // (push value to parameter stack)
-    k_ERASE_ARR_N2,       // (erase array)
     k_FREE_N1,            // (free memory)
     k_RND_N1,             // (random number)
     k_ADD_STR_N1,         // (add two strings from stack)
@@ -123,22 +108,24 @@ enum {
     k_POP_LOCAL_N2,       // (pop local variable)
     k_INC_LOCAL_N2,       // (increment local variable)
     k_DEC_LOCAL_N2,       // (decrement local variable)
+    k_GET_ARR_ELEM_S_N1,  // stack-based: pop idx, pop addr, push arr[idx]
+    k_SET_ARR_ELEM_S_N1,  // stack-based: pop val, pop idx, pop addr, arr[idx]=val
 };
 
 // Token types
 enum {
-    INT32 = 128, DIM, FOR, TO,  // 128 - 131 (INT32 replaces LET)
+    NC_INT32 = 128, DIM, FOR, TO, // 128 - 131 (NC_INT32 replaces LET)
     STEP, NEXT, IF, THEN,       // 132 - 135
     PRINT, GOTO, GOSUB, RETURN, // 136 - 139
     END, REM, AND, OR,          // 140 - 143
     NOT, MOD, NUM, STR,         // 144 - 147
-    ID, SID, EQ, NQ,            // 148 - 151
+    ID, STRID, EQ, NQ,          // 148 - 151
     LE, LQ, GR, GQ,             // 152 - 155
     XFUNC, ARR, BREAK, LABEL,   // 156 - 159
     SET1, SET2, SET4, GET1,     // 160 - 163    
     GET2, GET4, LEFTS, RIGHTS,  // 164 - 167
     MIDS, LEN, VAL, STRS,       // 168 - 171
-    SPC, PARAM, COPY, CONST,    // 172 - 175
+    SPC, PARAM, COPY, NC_CONST, // 172 - 175
     ERASE, ELSE, HEXS, NIL,     // 176 - 179
     INSTR, ON, TRON, TROFF,     // 180 - 183
     FREE, RND, PARAMS, STRINGS, // 184 - 187
@@ -148,8 +135,8 @@ enum {
     LBRACE, RBRACE,              // 198 - 199 (C-style blocks)
     PRINTF, STR8,                // 200 - 201 (C-style printf, string type)
     LBRACKET, RBRACKET,          // 202 - 203 (C-style array brackets)
-    UINT32,                      // 204 (unsigned 32-bit array type)
-    VOID,                        // 205 (void function type)
+    NC_UINT32,                   // 204 (unsigned 32-bit array type)
+    NC_VOID,                     // 205 (void function type)
     U8, U16, U32,                // 206 - 208 (C-style byte access)
     INC, DEC,                    // 209 - 210 (C-style ++ and --)
     LOCAL,                       // 211 (local variable marker)

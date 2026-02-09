@@ -166,11 +166,13 @@ if (a$ < b$) { ... }
 
 ## Data Types
 
-| Type     | Description                                    |
-|----------|------------------------------------------------|
-| `int32`  | Signed 32-bit integer (-2,147,483,648 to 2,147,483,647) |
-| `str8`   | String (up to 120 characters)                  |
-| `const`  | Compile-time numeric constant                  |
+| Type       | Description                                    |
+|------------|------------------------------------------------|
+| `int32`    | Signed 32-bit integer (-2,147,483,648 to 2,147,483,647) |
+| `int32[]`  | Array of 32-bit integers                       |
+| `int32[]`  | Array reference parameter (in function definitions) |
+| `str8`     | String (up to 120 characters)                  |
+| `const`    | Compile-time numeric constant                  |
 
 ---
 
@@ -213,6 +215,40 @@ func my_function(int32 param1, int32 param2) {
 ```
 
 **Note:** Functions can be defined anywhere in the file. Forward references are automatically resolved.
+
+### Array Reference Parameters
+
+Arrays can be passed to functions by reference using `int32[]` syntax:
+
+```c
+// Function that modifies array elements
+func doubleArray(int32[] arr, int32 size) {
+    for i = 0 to size - 1 {
+        arr[i] = arr[i] * 2
+    }
+}
+
+// Function that reads array elements
+func int32 sumArray(int32[] arr, int32 size) {
+    int32 sum = 0
+    for i = 0 to size - 1 {
+        sum = sum + arr[i]
+    }
+    return sum
+}
+
+// Usage
+int32 data[5]
+data[0] = 1
+data[1] = 2
+data[2] = 3
+
+printf("Sum before: %d\n", sumArray(data, 3))  // Output: 6
+doubleArray(data, 3)
+printf("Sum after: %d\n", sumArray(data, 3))   // Output: 12
+```
+
+**Note:** Array parameters are always passed by reference. Modifications inside the function affect the original array.
 
 ### Function with Return Value
 
@@ -345,7 +381,7 @@ Defines a compile-time constant:
 const MAX_SIZE = 100
 const BUFFER_LEN = 256
 
-uint32 buffer[MAX_SIZE]
+int32 buffer[MAX_SIZE]
 ```
 
 ### end
@@ -364,12 +400,12 @@ Formatted output (C-style):
 ```c
 printf("Value: %d\n", x)
 printf("Name: %s, Age: %d\n", name$, age)
-printf("Hex: %x\n", value)
+printf("Hex: %h\n", value)
 ```
 
 Format specifiers:
 - `%d` - decimal integer
-- `%x` - hexadecimal integer
+- `%h` - hexadecimal integer
 - `%s` - string
 - `\n` - newline
 

@@ -244,34 +244,6 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
         {
         case k_END:
             RETURN_VM(NB_END);
-        case k_PRINT_STR_N1:
-            tmp1 = POP();
-            nc_print("%s", get_string(vm, tmp1));
-            pc += 1;
-            break;
-        case k_PRINT_VAL_N1:
-            nc_print("%d ", POP());
-            pc += 1;
-            break;
-        case k_PRINT_NEWL_N1:
-            nc_print("\n");
-            pc += 1;
-            break;
-        case k_PRINT_TAB_N1:
-            nc_print("\t");
-            pc += 1;
-            break;
-        case k_PRINT_SPACE_N1:
-            nc_print(" ");
-            pc += 1;
-            break;
-        case k_PRINT_BLANKS_N1:
-            val = POP();
-            for(uint8_t i = 0; i < val; i++) {
-                nc_print(" ");
-            }
-            pc += 1;
-            break;
         case k_PUSH_STR_Nx:
             tmp1 = code[pc + 1]; // string length
             PUSH(pc + 2);  // push string address
@@ -386,14 +358,6 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             PPUSH(tmp1);
             pc += 3; 
             RETURN_VM(NB_BREAK);
-        case k_TRON_N1:
-            vm->trace_on = true;
-            pc += 1;
-            break;
-        case k_TROFF_N1:
-            vm->trace_on = false;
-            pc += 1;
-            break;
         case k_ADD_N1:
             tmp2 = POP();
             TOP() = TOP() + tmp2;
@@ -503,9 +467,6 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
                 RETURN_VM(NB_ERROR);
             }
             break;
-        case k_RETURN_N1:
-            pc = (uint16_t)POP();
-            break;
         case k_RETI_N1:
             // Clean up stack frame like LEAVE before returning
             sp = fp;             // discard local variables
@@ -549,65 +510,6 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
               pc += 3;
             }
             break;
-        case k_READ_NUM_N1:
-            if(vm->data_start_addr + vm->data_read_offs + 4 > vm->code_size) {
-                nc_print("Error: Out of data\n");
-                RETURN_VM(NB_ERROR);
-            }
-            tmp1 = ACS32(code[vm->data_start_addr + vm->data_read_offs]);
-            if(tmp1 & k_DATA_STR_TAG) {
-                nc_print("Error: Data type mismatch\n");
-                RETURN_VM(NB_ERROR);
-            }
-            PUSH(tmp1);
-            vm->data_read_offs += 4;
-            pc += 1;
-            break;
-        case k_READ_STR_N1:
-            if(vm->data_start_addr + vm->data_read_offs + 4 > vm->code_size) {
-                nc_print("Error: Out of data\n");
-                RETURN_VM(NB_ERROR);
-            }
-            tmp1 = ACS32(code[vm->data_start_addr + vm->data_read_offs]);
-            if((tmp1 & k_DATA_STR_TAG) != k_DATA_STR_TAG) {
-                nc_print("Error: Data type mismatch\n");
-                RETURN_VM(NB_ERROR);
-            }
-            PUSH(tmp1 & ~k_DATA_STR_TAG);
-            vm->data_read_offs += 4;
-            pc += 1;
-            break;
-        case k_RESTORE_N1:
-            offs1 = POP() * sizeof(uint32_t);
-            vm->data_read_offs = offs1;
-            pc += 1;
-            break;
-        case k_ON_GOTO_N2:
-            idx = POP();
-            val = code[pc + 1];
-            pc += 2;
-            if(idx == 0 || idx > val) {
-                pc += val * 3;
-            } else {
-                pc += (idx - 1) * 3;
-            }
-            break;
-        case k_ON_GOSUB_N2:
-            idx = POP();
-            val = code[pc + 1];
-            pc += 2;
-            if(idx == 0 || idx > val) {
-                pc += val * 3;  // skip all addresses
-            } else {
-                if(sp < cfg_STACK_SIZE) {
-                    PUSH(pc + val * 3);  // return address to the next instruction
-                    pc += (idx - 1) * 3;  // jump to the selected address
-                } else {
-                    nc_print("Error: Call stack overflow\n");
-                    RETURN_VM(NB_ERROR);
-                }
-            }
-            break;
         case k_SET_ARR_ELEM_N2:
             var = code[pc + 1];
             addr = vm->variables[var] & 0x7FFF;
@@ -630,6 +532,27 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             }
             PUSH(ACS32(vm->heap[addr + tmp1]));
             pc += 2;
+            break;
+        case k_GET_ARR_ELEM_S_N1: // stack-based: pop idx, pop addr, push arr[idx]
+            tmp1 = POP() * sizeof(uint32_t);  // index
+            addr = POP() & 0x7FFF;            // address from stack
+            if(tmp1 >= nc_mem_get_blocksize(vm, addr)) {
+                nc_print("Error: Array index out of bounds\n");
+                RETURN_VM(NB_ERROR);
+            }
+            PUSH(ACS32(vm->heap[addr + tmp1]));
+            pc += 1;
+            break;
+        case k_SET_ARR_ELEM_S_N1: // stack-based: pop val, pop idx, pop addr, arr[idx]=val
+            tmp1 = POP();                     // value
+            tmp2 = POP() * sizeof(uint32_t);  // index
+            addr = POP() & 0x7FFF;            // address from stack
+            if(tmp2 >= nc_mem_get_blocksize(vm, addr)) {
+                nc_print("Error: Array index out of bounds\n");
+                RETURN_VM(NB_ERROR);
+            }
+            ACS32(vm->heap[addr + tmp2]) = tmp1;
+            pc += 1;
             break;
 #ifdef cfg_DATA_ACCESS            
         case k_SET_ARR_1BYTE_N2:
@@ -736,17 +659,6 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             PPUSH(POP());
             pc += 1;
             break;
-#ifdef cfg_STRING_SUPPORT
-        case k_ERASE_ARR_N2:
-            var = code[pc + 1];
-            addr = vm->variables[var];
-            if(addr > 0x7FFF) {
-                nc_mem_free(vm, addr);
-            }
-            vm->variables[var] = 0;
-            pc += 2;
-            break;
-#endif
         case k_FREE_N1:
             nc_print(" %u/%u/%u bytes free (code/data/heap)", cfg_MAX_CODE_SIZE - vm->code_size,
                 sizeof(vm->variables) - (vm->num_vars * sizeof(uint32_t)), nc_mem_get_free(vm));

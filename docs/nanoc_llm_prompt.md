@@ -33,6 +33,15 @@ str8 name$ = "Hello"  // string (must end with $)
 const MAX = 100       // compile-time constant
 ```
 
+### Array Reference Parameters
+Use `int32[]` in function parameters to pass arrays by reference:
+```c
+func processData(int32[] buffer, int32 count) {
+    // buffer refers to the original array - modifications affect it
+    buffer[0] = 42
+}
+```
+
 ### Array References (C-style)
 Array names without `[]` are passed as references (like C pointers):
 ```c
@@ -53,11 +62,29 @@ func int32 add(int32 a, int32 b) {
     return a + b
 }
 
+// Array reference parameter (passed by reference)
+func int32 sumArray(int32[] arr, int32 size) {
+    int32 sum = 0
+    for i = 0 to size - 1 {
+        sum = sum + arr[i]
+    }
+    return sum
+}
+
+// Function that modifies array
+func clearArray(int32[] arr, int32 size) {
+    for i = 0 to size - 1 {
+        arr[i] = 0
+    }
+}
+
 // Call in expression
 int32 result = add(10, 20)
 
-// Call as statement (return value ignored)
-my_handler(42)
+// Call with array reference
+int32 data[10]
+int32 total = sumArray(data, 10)  // Pass array by reference
+clearArray(data, 10)              // Modifies original array
 ```
 
 ### Control Structures
@@ -95,7 +122,7 @@ Increment:  ++ --
 
 ### Output
 ```c
-printf("Value: %d\n", x)      // %d=int, %s=string, %x=hex
+printf("Value: %d\n", x)      // %d=int, %s=string, %h=hex
 printf("Name: %s\n", name$)   // string output
 ```
 
