@@ -31,7 +31,8 @@ func multiply(int32 x, int32 y) {
     result = x * y
 }
 
-// inner must be defined before outer (no forward declarations for user functions)
+// Functions must be defined before they are used, especially if 
+// called from other functions (no forward declaration possible).
 func inner(int32 v) {
     int32 doubled = v * 2
     printf("  inner: v=%d, doubled=%d\n", v, doubled)

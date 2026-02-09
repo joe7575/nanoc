@@ -1253,6 +1253,8 @@ static void compile_const(void) {
 }
 
 static void compile_free(void) {
+    match('(');
+    match(')');
     pCi->p_code[pCi->pc++] = k_FREE_N1;
 }
 

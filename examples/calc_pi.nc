@@ -17,7 +17,7 @@ int32 b = 0
 int32 f = 0
 int32 e = 0
 
-printf("PI = 3.")
+printf("PI = ")
 
 for t = 0 to n {
     c = 0
@@ -34,8 +34,10 @@ for t = 0 to n {
     
     // Output digit
     if (e < 10) {
-        printf("%d", p)
-        p = e
+        printf("%d", e)
+    }
+    if (t == 0) {
+        printf(".")
     }
 }
 

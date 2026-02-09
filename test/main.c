@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
     assert(nc_define_external_function("kvs_set", 3, (uint8_t[]){NB_NUM, NB_NUM, NB_NUM}, NB_NONE) == NB_XFUNC + 10);
     assert(nc_define_external_function("kvs_get", 2, (uint8_t[]){NB_NUM, NB_NUM}, NB_NUM) == NB_XFUNC + 11);
     // Event trigger function: fire_on_can(id, data1, data2) -> calls on_can: label
-    assert(nc_define_external_function("fire_on_can", 3, (uint8_t[]){NB_NUM, NB_NUM, NB_NUM}, NB_NONE) == NB_XFUNC + 12);
+    assert(nc_define_external_function("fire_on_can", 4, (uint8_t[]){NB_NUM, NB_NUM, NB_NUM, NB_REF}, NB_NONE) == NB_XFUNC + 12);
 #endif
 
     void *instance = nc_create();
@@ -317,7 +317,8 @@ int main(int argc, char* argv[]) {
                 }
                 nc_push_num(instance, value);
             } else if(res == NB_XFUNC + 12) {
-                // fire_on_can(id, data1, data2) -> jumps to on_can: label
+                // fire_on_can(id, data1, data2, data_arr) -> jumps to on_can: label
+                int32_t data_arr = nc_pop_num(instance);
                 int32_t data2 = nc_pop_num(instance);
                 int32_t data1 = nc_pop_num(instance);
                 int32_t id = nc_pop_num(instance);
@@ -328,6 +329,7 @@ int main(int argc, char* argv[]) {
                     nc_push_num(instance, id);
                     nc_push_num(instance, data1);
                     nc_push_num(instance, data2);
+                    nc_push_num(instance, data_arr);
                 } else {
                     nc_print("Warning: on_can handler not defined\n");
                 }

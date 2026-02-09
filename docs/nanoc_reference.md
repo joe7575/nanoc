@@ -503,7 +503,7 @@ int32 d = u32(buffer, 0)   // Read dword
 | Function | Description |
 |----------|-------------|
 | `copy(src, soff, dst, doff, len)` | Copy len bytes from src+soff to dst+doff |
-| `free` | Print free memory info |
+| `free()` | Print free memory info |
 
 Array names without `[]` are passed as references:
 

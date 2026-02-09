@@ -1,6 +1,8 @@
 // Heron's method for square root calculation
 // NanoC example
 
+free();printf("\n");
+
 int32 v = 400000  // Value to calculate the square root
 int32 s = 100     // Initial guess
 int32 t = 0
@@ -26,5 +28,5 @@ for i = 1 to 6 {
     printf("  Step %d: %d\n", i, res[i])
 }
 
-free
+free();printf("\n");
 end
