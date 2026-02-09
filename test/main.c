@@ -324,10 +324,10 @@ int main(int argc, char* argv[]) {
                 if (on_can_addr > 0) {
                     // Jump to on_can handler (like gosub)
                     nc_set_pc(instance, on_can_addr);
-                    // Push params in reverse order (so handler gets them in order)
-                    nc_push_num(instance, data2);
-                    nc_push_num(instance, data1);
+                    // Push params in normal order (handler receives in LIFO order)
                     nc_push_num(instance, id);
+                    nc_push_num(instance, data1);
+                    nc_push_num(instance, data2);
                 } else {
                     nc_print("Warning: on_can handler not defined\n");
                 }
