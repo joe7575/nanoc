@@ -507,7 +507,10 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             pc = (uint16_t)POP();
             break;
         case k_RETI_N1:
-            pc = (uint16_t)POP();
+            // Clean up stack frame like LEAVE before returning
+            sp = fp;             // discard local variables
+            fp = POP();          // restore old frame pointer
+            pc = (uint16_t)POP();  // return address
             RETURN_VM(NB_RETI);
         case k_FOR_N1:
             if(++vm->nested_loop_idx > cfg_MAX_FOR_LOOPS) {

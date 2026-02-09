@@ -17,5 +17,6 @@ log.txt
 *.so
 temp.bas
 *.rock
+*.bak
 test/output.txt
 test/report.txt
