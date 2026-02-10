@@ -923,7 +923,7 @@ static void compile_func(void) {
     
     // Parse parameters - they become local variables
     uint8_t param_indices[8];
-    uint8_t param_types[8];  // Store parameter types (NC_INT32, STR8, ARR)
+    //uint8_t param_types[8];  // Store parameter types (NC_INT32, STR8, ARR)
     uint8_t param_count = 0;
     
     tok = lookahead();
@@ -959,7 +959,7 @@ static void compile_func(void) {
             a_Symbol[pCi->sym_idx].type = ARR;
         }
         param_indices[param_count] = pCi->sym_idx;
-        param_types[param_count] = param_type;
+        //param_types[param_count] = param_type;
         param_count++;
         pCi->local_var_count++;
         

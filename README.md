@@ -107,8 +107,9 @@ fire_on_can(100, 1, 2)
 
 ## Open Issues / Limitations
 
-- No parameter type or count checking for callback/event handler functions
-  (e.g., on_can). Incorrect parameters may cause runtime errors.
+- No parameter type or count checking for callback/event handler
+  (e.g., on_can) and user functions. 
+  Incorrect parameters may cause runtime errors.
 
 ## License
 
