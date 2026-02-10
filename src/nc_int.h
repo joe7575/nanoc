@@ -110,6 +110,12 @@ enum {
     k_DEC_LOCAL_N2,       // (decrement local variable)
     k_GET_ARR_ELEM_S_N1,  // stack-based: pop idx, pop addr, push arr[idx]
     k_SET_ARR_ELEM_S_N1,  // stack-based: pop val, pop idx, pop addr, arr[idx]=val
+    k_GET_ARR_1BYTE_S_N1,  // stack-based: pop idx, pop addr, push u8
+    k_SET_ARR_1BYTE_S_N1,  // stack-based: pop val, pop idx, pop addr, set u8
+    k_GET_ARR_2BYTE_S_N1,  // stack-based: pop idx, pop addr, push u16
+    k_SET_ARR_2BYTE_S_N1,  // stack-based: pop val, pop idx, pop addr, set u16
+    k_GET_ARR_4BYTE_S_N1,  // stack-based: pop idx, pop addr, push u32
+    k_SET_ARR_4BYTE_S_N1,  // stack-based: pop val, pop idx, pop addr, set u32
 };
 
 // Token types

@@ -554,6 +554,69 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             ACS32(vm->heap[addr + tmp2]) = tmp1;
             pc += 1;
             break;
+        case k_GET_ARR_1BYTE_S_N1: // stack-based: pop idx, pop addr, push u8
+            tmp1 = POP();              // byte index
+            addr = POP() & 0x7FFF;     // address from stack
+            if(tmp1 >= nc_mem_get_blocksize(vm, addr)) {
+                nc_print("Error: Array index out of bounds\n");
+                RETURN_VM(NB_ERROR);
+            }
+            PUSH(ACS8(vm->heap[addr + tmp1]));
+            pc += 1;
+            break;
+        case k_SET_ARR_1BYTE_S_N1: // stack-based: pop val, pop idx, pop addr, set u8
+            tmp1 = POP();              // value
+            tmp2 = POP();              // byte index
+            addr = POP() & 0x7FFF;     // address from stack
+            if(tmp2 >= nc_mem_get_blocksize(vm, addr)) {
+                nc_print("Error: Array index out of bounds\n");
+                RETURN_VM(NB_ERROR);
+            }
+            ACS8(vm->heap[addr + tmp2]) = tmp1;
+            pc += 1;
+            break;
+        case k_GET_ARR_2BYTE_S_N1: // stack-based: pop idx, pop addr, push u16
+            tmp1 = POP();              // byte index
+            addr = POP() & 0x7FFF;     // address from stack
+            if(tmp1 + 1 >= nc_mem_get_blocksize(vm, addr)) {
+                nc_print("Error: Array index out of bounds\n");
+                RETURN_VM(NB_ERROR);
+            }
+            PUSH(ACS16(vm->heap[addr + tmp1]));
+            pc += 1;
+            break;
+        case k_SET_ARR_2BYTE_S_N1: // stack-based: pop val, pop idx, pop addr, set u16
+            tmp1 = POP();              // value
+            tmp2 = POP();              // byte index
+            addr = POP() & 0x7FFF;     // address from stack
+            if(tmp2 + 1 >= nc_mem_get_blocksize(vm, addr)) {
+                nc_print("Error: Array index out of bounds\n");
+                RETURN_VM(NB_ERROR);
+            }
+            ACS16(vm->heap[addr + tmp2]) = tmp1;
+            pc += 1;
+            break;
+        case k_GET_ARR_4BYTE_S_N1: // stack-based: pop idx, pop addr, push u32
+            tmp1 = POP();              // byte index
+            addr = POP() & 0x7FFF;     // address from stack
+            if(tmp1 + 3 >= nc_mem_get_blocksize(vm, addr)) {
+                nc_print("Error: Array index out of bounds\n");
+                RETURN_VM(NB_ERROR);
+            }
+            PUSH(ACS32(vm->heap[addr + tmp1]));
+            pc += 1;
+            break;
+        case k_SET_ARR_4BYTE_S_N1: // stack-based: pop val, pop idx, pop addr, set u32
+            tmp1 = POP();              // value
+            tmp2 = POP();              // byte index
+            addr = POP() & 0x7FFF;     // address from stack
+            if(tmp2 + 3 >= nc_mem_get_blocksize(vm, addr)) {
+                nc_print("Error: Array index out of bounds\n");
+                RETURN_VM(NB_ERROR);
+            }
+            ACS32(vm->heap[addr + tmp2]) = tmp1;
+            pc += 1;
+            break;
 #ifdef cfg_DATA_ACCESS            
         case k_SET_ARR_1BYTE_N2:
             var = code[pc + 1];

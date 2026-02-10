@@ -59,7 +59,7 @@ for j = 1 to 5 {
 
 // Test memory functions
 printf("| Memory: ")
-free
+free()
 printf("      |\n")
 
 // Allocate some arrays
@@ -69,7 +69,7 @@ int32 BR2[127]
 int32 BR3[127]
 
 printf("| After:  ")
-free
+free()
 printf("      |\n")
 
 // Test comparisons

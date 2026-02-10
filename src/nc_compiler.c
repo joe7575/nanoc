@@ -113,7 +113,7 @@ static void compile_break(void);
 static void compile_reti(void);
 #ifdef cfg_DATA_ACCESS
 static void compile_copy(void);
-static void compile_get(uint8_t tok, uint8_t instr);
+static void compile_get(uint8_t tok, uint8_t instr, uint8_t instr_s);
 static void compile_u8_stmt(void);
 static void compile_u16_stmt(void);
 static void compile_u32_stmt(void);
@@ -312,9 +312,9 @@ void nc_output_symbol_table(void *pv_vm) {
 uint16_t nc_get_label_address(void *pv_vm, char *name) {
     (void)pv_vm;
     char str[k_MAX_SYM_LEN];
-    // Convert to lower case
+    // Copy symbol name (case-sensitive)
     for(uint16_t i = 0; i < k_MAX_SYM_LEN; i++) {
-        str[i] = tolower(name[i]);
+        str[i] = name[i];
         if(name[i] == '\0') {
             break;
         }
@@ -1177,17 +1177,26 @@ static void compile_copy(void) {
     pCi->p_code[pCi->pc++] = k_COPY_N1;
 }
 
-static void compile_get(uint8_t tok, uint8_t instr) {
+static void compile_get(uint8_t tok, uint8_t instr, uint8_t instr_s) {
     uint8_t idx;
     match(tok);
     match('(');
     match(ARR);
     idx = pCi->sym_idx;
+    bool is_local = a_Symbol[idx].is_local;
+    if(is_local) {
+        pCi->p_code[pCi->pc++] = k_PUSH_LOCAL_N2;
+        pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    }
     match(',');
     compile_expression(e_NUM);
     match(')');
-    pCi->p_code[pCi->pc++] = instr;
-    pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    if(is_local) {
+        pCi->p_code[pCi->pc++] = instr_s;
+    } else {
+        pCi->p_code[pCi->pc++] = instr;
+        pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    }
 }
 
 /*
@@ -1199,13 +1208,22 @@ static void compile_u8_stmt(void) {
     match('(');
     match(ARR);
     idx = pCi->sym_idx;
+    bool is_local = a_Symbol[idx].is_local;
+    if(is_local) {
+        pCi->p_code[pCi->pc++] = k_PUSH_LOCAL_N2;
+        pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    }
     match(',');
     compile_expression(e_NUM);
     match(',');
     compile_expression(e_NUM);
     match(')');
-    pCi->p_code[pCi->pc++] = k_SET_ARR_1BYTE_N2;
-    pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    if(is_local) {
+        pCi->p_code[pCi->pc++] = k_SET_ARR_1BYTE_S_N1;
+    } else {
+        pCi->p_code[pCi->pc++] = k_SET_ARR_1BYTE_N2;
+        pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    }
 }
 
 static void compile_u16_stmt(void) {
@@ -1213,13 +1231,22 @@ static void compile_u16_stmt(void) {
     match('(');
     match(ARR);
     idx = pCi->sym_idx;
+    bool is_local = a_Symbol[idx].is_local;
+    if(is_local) {
+        pCi->p_code[pCi->pc++] = k_PUSH_LOCAL_N2;
+        pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    }
     match(',');
     compile_expression(e_NUM);
     match(',');
     compile_expression(e_NUM);
     match(')');
-    pCi->p_code[pCi->pc++] = k_SET_ARR_2BYTE_N2;
-    pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    if(is_local) {
+        pCi->p_code[pCi->pc++] = k_SET_ARR_2BYTE_S_N1;
+    } else {
+        pCi->p_code[pCi->pc++] = k_SET_ARR_2BYTE_N2;
+        pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    }
 }
 
 static void compile_u32_stmt(void) {
@@ -1227,13 +1254,22 @@ static void compile_u32_stmt(void) {
     match('(');
     match(ARR);
     idx = pCi->sym_idx;
+    bool is_local = a_Symbol[idx].is_local;
+    if(is_local) {
+        pCi->p_code[pCi->pc++] = k_PUSH_LOCAL_N2;
+        pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    }
     match(',');
     compile_expression(e_NUM);
     match(',');
     compile_expression(e_NUM);
     match(')');
-    pCi->p_code[pCi->pc++] = k_SET_ARR_4BYTE_N2;
-    pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    if(is_local) {
+        pCi->p_code[pCi->pc++] = k_SET_ARR_4BYTE_S_N1;
+    } else {
+        pCi->p_code[pCi->pc++] = k_SET_ARR_4BYTE_N2;
+        pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    }
 }
 #endif
 
@@ -1272,9 +1308,9 @@ static uint16_t sym_add(char *id, uint32_t val, uint8_t type) {
     uint16_t start = 0;
     char sym[k_MAX_SYM_LEN];
 
-    // Convert to lower case
+    // Copy symbol name (case-sensitive)
     for(uint16_t i = 0; i < k_MAX_SYM_LEN; i++) {
-        sym[i] = tolower(id[i]);
+        sym[i] = id[i];
         if(sym[i] == '\0') {
             break;
         }
@@ -1315,9 +1351,9 @@ static uint16_t sym_add(char *id, uint32_t val, uint8_t type) {
 static uint16_t sym_get(char *id) {
     char sym[k_MAX_SYM_LEN];
 
-    // Convert to lower case
+    // Copy symbol name (case-sensitive)
     for(uint16_t i = 0; i < k_MAX_SYM_LEN; i++) {
-        sym[i] = tolower(id[i]);
+        sym[i] = id[i];
         if(sym[i] == '\0') {
             break;
         }
@@ -1725,15 +1761,15 @@ static type_t compile_factor(void) {
         break;
 #ifdef cfg_DATA_ACCESS
     case U8: // u8(arr, idx) - read byte
-        compile_get(U8, k_GET_ARR_1BYTE_N2);
+        compile_get(U8, k_GET_ARR_1BYTE_N2, k_GET_ARR_1BYTE_S_N1);
         type = e_NUM;
         break;
     case U16: // u16(arr, idx) - read word
-        compile_get(U16, k_GET_ARR_2BYTE_N2);
+        compile_get(U16, k_GET_ARR_2BYTE_N2, k_GET_ARR_2BYTE_S_N1);
         type = e_NUM;
         break;
     case U32: // u32(arr, idx) - read dword
-        compile_get(U32, k_GET_ARR_4BYTE_N2);
+        compile_get(U32, k_GET_ARR_4BYTE_N2, k_GET_ARR_4BYTE_S_N1);
         type = e_NUM;
         break;
     // REF is deprecated - array names without [] now work as references

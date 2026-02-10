@@ -45,7 +45,7 @@ NanoC is derived from NanoBasic but uses C-style syntax with curly braces, typed
 
 ### Character Set
 
-NanoC supports the ASCII character set, including upper and lower case letters, digits 0-9, and special characters. NanoC is **case-sensitive** for variable names but **case-insensitive** for keywords.
+NanoC supports the ASCII character set, including upper and lower case letters, digits 0-9, and special characters. NanoC is **case-sensitive** for both keywords and variable names (all keywords are lowercase).
 
 ### Comments
 

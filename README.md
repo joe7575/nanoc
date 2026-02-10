@@ -110,10 +110,6 @@ fire_on_can(100, 1, 2)
 - No parameter type or count checking for callback/event handler functions
   (e.g., on_can). Incorrect parameters may cause runtime errors.
 
-- The u8/u16/u32 byte/word access functions only work with global variables,
-  not with local or parameter arrays.
-
-
 ## License
 
 Copyright (C) 2024-2026 Joachim Stolberg
@@ -121,6 +117,10 @@ Copyright (C) 2024-2026 Joachim Stolberg
 The software is licensed under the MIT license.
 
 ## History
+
+**2026-02-10 V2.2.0**
+- Make compiler case-sensitive
+- Support u8/u16/u32 byte access on function-local arrays
 
 **2026-02-09 V2.1.0**
 - Add array reference parameters for functions (int32[] syntax)
