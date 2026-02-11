@@ -151,6 +151,8 @@ Out-of-range values are silently skipped in both forms.
 
 - No parameter type checking for user functions.
   Passing wrong types (e.g. string instead of int32) may cause runtime errors.
+- Function-local arrays are not supported. Therefore, it should not be 
+  possible to define function-local arrays.
 
 ## License
 
