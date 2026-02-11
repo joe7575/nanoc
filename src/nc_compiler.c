@@ -120,7 +120,7 @@ static void compile_u32_stmt(void);
 #endif
 static void compile_const(void);
 static void compile_while(void);
-static void compile_switch(void);
+static void compile_dispatch(void);
 static void compile_free(void);
 static uint16_t sym_add(char *id, uint32_t val, uint8_t type);
 static uint16_t sym_get(char *id);
@@ -187,8 +187,7 @@ void nc_init(void) {
     sym_add("free", 0, FREE);
     sym_add("rnd", 0, RND);
     sym_add("printf", 0, PRINTF);
-    sym_add("switch", 0, SWITCH);
-    sym_add("case", 0, CASE);
+    sym_add("dispatch", 0, DISPATCH);
     StartOfVars = CurrVarIdx;
 }
 
@@ -585,7 +584,7 @@ static void compile_stmt(void) {
     case U32: compile_u32_stmt(); break;
 #endif
     case FREE: compile_free(); break;
-    case SWITCH: compile_switch(); break;
+    case DISPATCH: compile_dispatch(); break;
     case ':': break;
     default: error("syntax error", pCi->a_buff); break;
     }
@@ -1307,29 +1306,29 @@ static void compile_free(void) {
 }
 
 /*
-** switch(expr) {
-**     case func_a
-**     case func_b
-**     case func_c
+** dispatch(expr) {
+**     func_a
+**     func_b
+**     func_c
 ** }
 ** Calls func_a() if expr==0, func_b() if expr==1, etc.
-** If expr is out of range, the switch is skipped.
+** If expr is out of range, the dispatch is skipped.
 */
-static void compile_switch(void) {
+static void compile_dispatch(void) {
     match('(');
     compile_expression(e_NUM);
     match(')');
     match(LBRACE);
 
     // Emit opcode and placeholder for count
-    pCi->p_code[pCi->pc++] = k_SWITCH_Nx;
+    pCi->p_code[pCi->pc++] = k_DISPATCH_Nx;
     uint16_t count_pos = pCi->pc;
     pCi->p_code[pCi->pc++] = 0; // count placeholder
 
     uint8_t count = 0;
     uint8_t tok = lookahead();
 
-    // Process case entries (may span multiple lines)
+    // Process dispatch entries (may span multiple lines)
     while(tok != RBRACE) {
         if(tok == 0) {
             // End of line - read next line
@@ -1337,24 +1336,18 @@ static void compile_switch(void) {
             tok = lookahead();
             continue;
         }
-        if(tok == CASE) {
-            match(CASE);
-            tok = next();
-            if(tok != LABEL && tok != ID) {
-                error("function name expected", pCi->a_buff);
-                return;
-            }
-            uint16_t idx = pCi->sym_idx;
-            uint16_t addr = a_Symbol[idx].value;
-            // Register for forward declaration patching
-            forward_declaration(idx, pCi->pc);
-            pCi->p_code[pCi->pc++] = addr & 0xFF;
-            pCi->p_code[pCi->pc++] = (addr >> 8) & 0xFF;
-            count++;
-        } else {
-            error("'case' expected", pCi->a_buff);
+        tok = next();
+        if(tok != LABEL && tok != ID) {
+            error("function name expected", pCi->a_buff);
             return;
         }
+        uint16_t idx = pCi->sym_idx;
+        uint16_t addr = a_Symbol[idx].value;
+        // Register for forward declaration patching
+        forward_declaration(idx, pCi->pc);
+        pCi->p_code[pCi->pc++] = addr & 0xFF;
+        pCi->p_code[pCi->pc++] = (addr >> 8) & 0xFF;
+        count++;
         tok = lookahead();
     }
     match(RBRACE);

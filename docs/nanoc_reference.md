@@ -368,15 +368,15 @@ while (i < 10) {
     i++
 }
 ```
-### switch (Indexed Dispatch)
+### dispatch (Indexed Dispatch)
 
-Calls a function based on a 0-based index. If the index is out of range, the switch is silently skipped.
+Calls a function based on a 0-based index. If the index is out of range, the dispatch is silently skipped.
 
 ```c
-switch(expression) {
-    case function_name_0
-    case function_name_1
-    case function_name_2
+dispatch(expression) {
+    function_name_0
+    function_name_1
+    function_name_2
 }
 ```
 
@@ -396,10 +396,10 @@ func handle_error() {
 }
 
 int32 state = 1
-switch(state) {
-    case handle_idle
-    case handle_running
-    case handle_error
+dispatch(state) {
+    handle_idle
+    handle_running
+    handle_error
 }
 // Output: "Running"
 ```

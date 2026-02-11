@@ -105,9 +105,9 @@ func on_can(int32 id, int32 d1, int32 d2) {
 fire_on_can(100, 1, 2)
 ```
 
-## Switch / Dispatch
+## Dispatch
 
-NanoC supports indexed function dispatch via `switch`:
+NanoC supports indexed function dispatch via `dispatch`:
 
 ```c
 func handler_a() {
@@ -120,9 +120,9 @@ func handler_b() {
 
 // Calls handler_a() if idx==0, handler_b() if idx==1
 // Out-of-range values are silently skipped
-switch(idx) {
-    case handler_a
-    case handler_b
+dispatch(idx) {
+    handler_a
+    handler_b
 }
 ```
 
@@ -140,7 +140,7 @@ The software is licensed under the MIT license.
 ## History
 
 **2026-02-11 V2.3.0**
-- Add switch/case for indexed function dispatch
+- Add `dispatch` for indexed function dispatch
 - Add parameter count checking for user functions
 
 **2026-02-10 V2.2.0**

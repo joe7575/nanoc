@@ -110,11 +110,11 @@ while (x > 0) {
     x--
 }
 
-// switch (indexed dispatch, 0-based)
-switch(state) {
-    case handler_idle
-    case handler_running
-    case handler_error
+// dispatch (indexed dispatch, 0-based)
+dispatch(state) {
+    handler_idle
+    handler_running
+    handler_error
 }
 // Calls handler_idle() if state==0, handler_running() if state==1, etc.
 // Out-of-range values are silently skipped.

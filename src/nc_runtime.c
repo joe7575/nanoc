@@ -617,7 +617,7 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             ACS32(vm->heap[addr + tmp2]) = tmp1;
             pc += 1;
             break;
-        case k_SWITCH_Nx: {
+        case k_DISPATCH_Nx: {
             uint8_t count = code[pc + 1];
             int32_t index = POP();
             uint16_t instr_len = 2 + count * 2;

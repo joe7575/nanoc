@@ -116,7 +116,7 @@ enum {
     k_SET_ARR_2BYTE_S_N1,  // stack-based: pop val, pop idx, pop addr, set u16
     k_GET_ARR_4BYTE_S_N1,  // stack-based: pop idx, pop addr, push u32
     k_SET_ARR_4BYTE_S_N1,  // stack-based: pop val, pop idx, pop addr, set u32
-    k_SWITCH_Nx,            // switch(expr) { case func1 case func2 ... }
+    k_DISPATCH_Nx,           // dispatch(expr) { func1 func2 ... }
 };
 
 // Token types
@@ -149,8 +149,7 @@ enum {
     LOCAL,                       // 211 (local variable marker)
     FUNC,                        // 212 (function definition keyword)
     RET,                         // 213 (return statement)
-    SWITCH,                      // 214 (switch statement)
-    CASE,                        // 215 (case label in switch)
+    DISPATCH,                    // 214 (indexed dispatch)
 };
 
 // Symbol table
