@@ -425,6 +425,16 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             TOP() = TOP() ^ tmp2;
             pc += 1;
             break;
+        case k_SHL_N1:
+            tmp2 = POP();
+            TOP() = TOP() << tmp2;
+            pc += 1;
+            break;
+        case k_SHR_N1:
+            tmp2 = POP();
+            TOP() = (int32_t)((uint32_t)TOP() >> tmp2);
+            pc += 1;
+            break;
         case k_EQUAL_N1:
             tmp2 = POP();
             TOP() = TOP() == tmp2;

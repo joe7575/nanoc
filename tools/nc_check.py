@@ -45,6 +45,7 @@ U8 = 206; U16 = 207; U32 = 208
 INC = 209; DEC = 210
 LOCAL = 211; FUNC = 212; RET = 213
 DISPATCH = 214
+SHL = 215; SHR = 216
 e_CNST = 250  # Internal: compile-time constant
 
 # Special single-char tokens returned as ord(char)
@@ -201,6 +202,10 @@ def tokenize_line(line):
                 yield Token(INC, None, "++"); i += 2; continue
             if two == '--':
                 yield Token(DEC, None, "--"); i += 2; continue
+            if two == '<<':
+                yield Token(SHL, None, "<<"); i += 2; continue
+            if two == '>>':
+                yield Token(SHR, None, ">>"); i += 2; continue
 
         # Single-character operators and punctuation
         if c == '<':
@@ -948,8 +953,14 @@ class NcChecker:
             self.compile_bin_and_expr()
 
     def compile_bin_and_expr(self):
-        self.compile_add_expr()
+        self.compile_shift_expr()
         while self.peek_type() == ord('&'):
+            self.next()
+            self.compile_shift_expr()
+
+    def compile_shift_expr(self):
+        self.compile_add_expr()
+        while self.peek_type() in (SHL, SHR):
             self.next()
             self.compile_add_expr()
 

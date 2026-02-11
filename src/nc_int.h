@@ -55,6 +55,8 @@ enum {
     k_BAND_N1,            // (bitwise and two values from stack)
     k_BOR_N1,             // (bitwise or two values from stack)
     k_BXOR_N1,            // (bitwise xor two values from stack)
+    k_SHL_N1,             // (shift left two values from stack)
+    k_SHR_N1,             // (shift right two values from stack)
     k_EQUAL_N1,           // (compare two values from stack)
     k_NOT_EQUAL_N1,       // (compare two values from stack)
     k_LESS_N1,            // (compare two values from stack)     
@@ -151,6 +153,7 @@ enum {
     FUNC,                        // 212 (function definition keyword)
     RET,                         // 213 (return statement)
     DISPATCH,                    // 214 (indexed dispatch)
+    SHL, SHR,                    // 215 - 216 (bit shift operators)
 };
 
 // Symbol table

@@ -138,6 +138,7 @@ static type_t compile_comp_expr(void);
 static type_t compile_bin_and_expr(void);
 static type_t compile_bin_or_expr(void);
 static type_t compile_bin_xor_expr(void);
+static type_t compile_shift_expr(void);
 static type_t compile_add_expr(void);
 static type_t compile_term(void);
 static type_t compile_neg_factor(void);
@@ -438,7 +439,10 @@ static uint8_t next_token(void) {
         return '|';  // bitwise OR
     }
     if(pCi->a_buff[0] == '<') {
-        // parse '<=', '<>', and '<'
+        // parse '<<', '<=', '<>', and '<'
+        if (pCi->a_buff[1] == '<') {
+            return SHL;
+        }
         if (pCi->a_buff[1] == '=') {
             return LQ;
         }
@@ -448,7 +452,10 @@ static uint8_t next_token(void) {
         return LE;
     }
     if(pCi->a_buff[0] == '>') {
-        // parse '>=' or '>'
+        // parse '>>', '>=' or '>'
+        if (pCi->a_buff[1] == '>') {
+            return SHR;
+        }
         if (pCi->a_buff[1] == '=') {
             return GQ;
         }
@@ -1740,15 +1747,30 @@ static type_t compile_bin_xor_expr(void) {
 }
 
 static type_t compile_bin_and_expr(void) {
-    type_t type1 = compile_add_expr();
+    type_t type1 = compile_shift_expr();
     uint8_t op = lookahead();
     while(op == '&') {
+        match(op);
+        type_t type2 = compile_shift_expr();
+        if(type1 != e_NUM || type2 != e_NUM) {
+            error("type mismatch", pCi->a_buff);
+        }
+        pCi->p_code[pCi->pc++] = k_BAND_N1;
+        op = lookahead();
+    }
+    return type1;
+}
+
+static type_t compile_shift_expr(void) {
+    type_t type1 = compile_add_expr();
+    uint8_t op = lookahead();
+    while(op == SHL || op == SHR) {
         match(op);
         type_t type2 = compile_add_expr();
         if(type1 != e_NUM || type2 != e_NUM) {
             error("type mismatch", pCi->a_buff);
         }
-        pCi->p_code[pCi->pc++] = k_BAND_N1;
+        pCi->p_code[pCi->pc++] = (op == SHL) ? k_SHL_N1 : k_SHR_N1;
         op = lookahead();
     }
     return type1;

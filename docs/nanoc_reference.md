@@ -128,6 +128,8 @@ x = data[5]
 | Bitwise     | `&`      | Bitwise AND          |
 |             | `\|`     | Bitwise OR           |
 |             | `^`      | Bitwise XOR          |
+|             | `<<`     | Shift left           |
+|             | `>>`     | Shift right          |
 | Relational  | `==`     | Equal                |
 |             | `!=`     | Not equal            |
 |             | `<`      | Less than            |
@@ -146,12 +148,13 @@ x = data[5]
 2. `-` (unary), `not`
 3. `*`, `/`, `%`, `mod`
 4. `+`, `-`
-5. `&`
-6. `^`
-7. `|`
-8. `==`, `!=`, `<`, `<=`, `>`, `>=`
-9. `and`
-10. `or`
+5. `<<`, `>>`
+6. `&`
+7. `^`
+8. `|`
+9. `==`, `!=`, `<`, `<=`, `>`, `>=`
+10. `and`
+11. `or`
 
 ### String Operations
 

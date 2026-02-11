@@ -133,7 +133,7 @@ dispatch(id) {
 ### Operators
 ```
 Arithmetic: + - * / % (or mod)
-Bitwise:    & | ^
+Bitwise:    & | ^ << >>
 Comparison: == != < <= > >=
 Logical:    and or not
 Increment:  ++ --
