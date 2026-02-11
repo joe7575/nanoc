@@ -368,7 +368,41 @@ while (i < 10) {
     i++
 }
 ```
+### switch (Indexed Dispatch)
 
+Calls a function based on a 0-based index. If the index is out of range, the switch is silently skipped.
+
+```c
+switch(expression) {
+    case function_name_0
+    case function_name_1
+    case function_name_2
+}
+```
+
+Example:
+
+```c
+func handle_idle() {
+    printf("Idle\\n")
+}
+
+func handle_running() {
+    printf("Running\\n")
+}
+
+func handle_error() {
+    printf("Error\\n")
+}
+
+int32 state = 1
+switch(state) {
+    case handle_idle
+    case handle_running
+    case handle_error
+}
+// Output: "Running"
+```
 ---
 
 ## Statements

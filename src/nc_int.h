@@ -116,6 +116,7 @@ enum {
     k_SET_ARR_2BYTE_S_N1,  // stack-based: pop val, pop idx, pop addr, set u16
     k_GET_ARR_4BYTE_S_N1,  // stack-based: pop idx, pop addr, push u32
     k_SET_ARR_4BYTE_S_N1,  // stack-based: pop val, pop idx, pop addr, set u32
+    k_SWITCH_Nx,            // switch(expr) { case func1 case func2 ... }
 };
 
 // Token types
@@ -148,14 +149,17 @@ enum {
     LOCAL,                       // 211 (local variable marker)
     FUNC,                        // 212 (function definition keyword)
     RET,                         // 213 (return statement)
+    SWITCH,                      // 214 (switch statement)
+    CASE,                        // 215 (case label in switch)
 };
 
 // Symbol table
 typedef struct {
     char name[k_MAX_SYM_LEN];
-    uint8_t  type;    // Token type
-    uint8_t  is_local; // 1 if local variable in void function
-    uint32_t value;   // Variable index (0..n) or label address, for locals: stack offset
+    uint8_t  type;        // Token type
+    uint8_t  is_local;    // 1 if local variable in void function
+    uint8_t  param_count; // Number of parameters for LABEL (func), 0xFF = unknown
+    uint32_t value;       // Variable index (0..n) or label address, for locals: stack offset
 } sym_t;
 
 // Virtual machine

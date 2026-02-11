@@ -120,6 +120,7 @@ static void compile_u32_stmt(void);
 #endif
 static void compile_const(void);
 static void compile_while(void);
+static void compile_switch(void);
 static void compile_free(void);
 static uint16_t sym_add(char *id, uint32_t val, uint8_t type);
 static uint16_t sym_get(char *id);
@@ -186,6 +187,8 @@ void nc_init(void) {
     sym_add("free", 0, FREE);
     sym_add("rnd", 0, RND);
     sym_add("printf", 0, PRINTF);
+    sym_add("switch", 0, SWITCH);
+    sym_add("case", 0, CASE);
     StartOfVars = CurrVarIdx;
 }
 
@@ -582,6 +585,7 @@ static void compile_stmt(void) {
     case U32: compile_u32_stmt(); break;
 #endif
     case FREE: compile_free(); break;
+    case SWITCH: compile_switch(); break;
     case ':': break;
     default: error("syntax error", pCi->a_buff); break;
     }
@@ -720,6 +724,11 @@ static void compile_var(uint8_t tok) {
             }
         }
         match(')');
+
+        // Check parameter count
+        if(a_Symbol[idx].param_count != 0xFF && param_count != a_Symbol[idx].param_count) {
+            error("wrong number of arguments", a_Symbol[idx].name);
+        }
         
         // Generate GOSUB to function
         forward_declaration(idx, pCi->pc + 1);
@@ -1020,6 +1029,9 @@ static void compile_func(void) {
             CurrVarIdx--;
         }
     }
+
+    // Store parameter count in function symbol for call-site checking
+    a_Symbol[func_idx].param_count = param_count;
     
     // Exit function context
     pCi->in_func = false;
@@ -1294,6 +1306,63 @@ static void compile_free(void) {
     pCi->p_code[pCi->pc++] = k_FREE_N1;
 }
 
+/*
+** switch(expr) {
+**     case func_a
+**     case func_b
+**     case func_c
+** }
+** Calls func_a() if expr==0, func_b() if expr==1, etc.
+** If expr is out of range, the switch is skipped.
+*/
+static void compile_switch(void) {
+    match('(');
+    compile_expression(e_NUM);
+    match(')');
+    match(LBRACE);
+
+    // Emit opcode and placeholder for count
+    pCi->p_code[pCi->pc++] = k_SWITCH_Nx;
+    uint16_t count_pos = pCi->pc;
+    pCi->p_code[pCi->pc++] = 0; // count placeholder
+
+    uint8_t count = 0;
+    uint8_t tok = lookahead();
+
+    // Process case entries (may span multiple lines)
+    while(tok != RBRACE) {
+        if(tok == 0) {
+            // End of line - read next line
+            if(!get_line()) break;
+            tok = lookahead();
+            continue;
+        }
+        if(tok == CASE) {
+            match(CASE);
+            tok = next();
+            if(tok != LABEL && tok != ID) {
+                error("function name expected", pCi->a_buff);
+                return;
+            }
+            uint16_t idx = pCi->sym_idx;
+            uint16_t addr = a_Symbol[idx].value;
+            // Register for forward declaration patching
+            forward_declaration(idx, pCi->pc);
+            pCi->p_code[pCi->pc++] = addr & 0xFF;
+            pCi->p_code[pCi->pc++] = (addr >> 8) & 0xFF;
+            count++;
+        } else {
+            error("'case' expected", pCi->a_buff);
+            return;
+        }
+        tok = lookahead();
+    }
+    match(RBRACE);
+
+    // Patch count
+    pCi->p_code[count_pos] = count;
+}
+
 /**************************************************************************************************
  * Symbol table and other helper functions
  *************************************************************************************************/
@@ -1337,7 +1406,8 @@ static uint16_t sym_add(char *id, uint32_t val, uint8_t type) {
             strcpy(a_Symbol[i].name, sym);
             a_Symbol[i].value = val;
             a_Symbol[i].type = type;
-            a_Symbol[i].is_local = 0;  // Default: global
+            a_Symbol[i].is_local = 0;     // Default: global
+            a_Symbol[i].param_count = 0xFF; // Default: unknown
             if(type != LABEL) {
                 CurrVarIdx++;
             }
@@ -1905,13 +1975,16 @@ static type_t compile_factor(void) {
     case LABEL: // Function call with return value: func(args)
         {
             match(LABEL);
-            uint16_t addr = a_Symbol[pCi->sym_idx].value;
+            uint16_t func_sym = pCi->sym_idx;
+            uint16_t addr = a_Symbol[func_sym].value;
+            uint8_t call_param_count = 0;
             match('(');
             // Push arguments to parameter stack
             tok = lookahead();
             while(tok != ')') {
                 compile_expression(e_ANY);  // Accept any type (e_NUM, e_STR, e_REF)
                 pCi->p_code[pCi->pc++] = k_PUSH_PARAM_N1;
+                call_param_count++;
                 tok = lookahead();
                 if(tok == ',') {
                     match(',');
@@ -1919,6 +1992,10 @@ static type_t compile_factor(void) {
                 }
             }
             match(')');
+            // Check parameter count
+            if(a_Symbol[func_sym].param_count != 0xFF && call_param_count != a_Symbol[func_sym].param_count) {
+                error("wrong number of arguments", a_Symbol[func_sym].name);
+            }
             // Generate GOSUB to function
             pCi->p_code[pCi->pc++] = k_GOSUB_N3;
             pCi->p_code[pCi->pc++] = addr & 0xFF;

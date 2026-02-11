@@ -617,6 +617,27 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             ACS32(vm->heap[addr + tmp2]) = tmp1;
             pc += 1;
             break;
+        case k_SWITCH_Nx: {
+            uint8_t count = code[pc + 1];
+            int32_t index = POP();
+            uint16_t instr_len = 2 + count * 2;
+            if(index >= 0 && index < count) {
+                // Push return address (after this instruction) like GOSUB
+                if(sp < cfg_STACK_SIZE) {
+                    PUSH(pc + instr_len);
+                    // Jump to target function
+                    uint16_t target_pos = pc + 2 + index * 2;
+                    pc = ACS16(code[target_pos]);
+                } else {
+                    nc_print("Error: Call stack overflow\n");
+                    RETURN_VM(NB_ERROR);
+                }
+            } else {
+                // Out of range: skip
+                pc += instr_len;
+            }
+            break;
+        }
 #ifdef cfg_DATA_ACCESS            
         case k_SET_ARR_1BYTE_N2:
             var = code[pc + 1];
