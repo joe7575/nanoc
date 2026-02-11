@@ -638,6 +638,19 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             }
             break;
         }
+        case k_DISPATCH_JMP_Nx: {
+            uint8_t count = code[pc + 1];
+            uint16_t table_addr = ACS16(code[pc + 2]);
+            int32_t index = POP();
+            if(index >= 0 && index < count) {
+                uint16_t target = ACS16(code[table_addr + index * 2]);
+                pc = target;
+            } else {
+                // Out of range: skip to end (after jump table)
+                pc = table_addr + count * 2;
+            }
+            break;
+        }
 #ifdef cfg_DATA_ACCESS            
         case k_SET_ARR_1BYTE_N2:
             var = code[pc + 1];

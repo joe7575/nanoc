@@ -110,7 +110,7 @@ while (x > 0) {
     x--
 }
 
-// dispatch (indexed dispatch, 0-based)
+// dispatch (indexed function dispatch, 0-based)
 dispatch(state) {
     handler_idle
     handler_running
@@ -118,6 +118,16 @@ dispatch(state) {
 }
 // Calls handler_idle() if state==0, handler_running() if state==1, etc.
 // Out-of-range values are silently skipped.
+
+// dispatch (inline, 0-based) - code runs in current scope
+dispatch(id) {
+    0: printf("idle\n")
+    1: printf("run %d\n", val)
+    2: {
+        int32 sum = d1 + d2
+        printf("error %d\n", sum)
+    }
+}
 ```
 
 ### Operators

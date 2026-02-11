@@ -117,6 +117,7 @@ enum {
     k_GET_ARR_4BYTE_S_N1,  // stack-based: pop idx, pop addr, push u32
     k_SET_ARR_4BYTE_S_N1,  // stack-based: pop val, pop idx, pop addr, set u32
     k_DISPATCH_Nx,           // dispatch(expr) { func1 func2 ... }
+    k_DISPATCH_JMP_Nx,       // dispatch(expr) { 0: code 1: code ... }
 };
 
 // Token types

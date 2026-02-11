@@ -107,7 +107,11 @@ fire_on_can(100, 1, 2)
 
 ## Dispatch
 
-NanoC supports indexed function dispatch via `dispatch`:
+NanoC supports two forms of indexed dispatch:
+
+### Function Dispatch
+
+Calls a function based on a 0-based index (like GOSUB):
 
 ```c
 func handler_a() {
@@ -118,13 +122,30 @@ func handler_b() {
     printf("B\n")
 }
 
-// Calls handler_a() if idx==0, handler_b() if idx==1
-// Out-of-range values are silently skipped
 dispatch(idx) {
     handler_a
     handler_b
 }
 ```
+
+### Inline Dispatch
+
+Executes code inline with access to local variables and parameters:
+
+```c
+func on_event(int32 id, int32 d1, int32 d2) {
+    dispatch(id) {
+        0: printf("idle\n")
+        1: printf("run %d %d\n", d1, d2)
+        2: {
+            int32 sum = d1 + d2
+            printf("error %d\n", sum)
+        }
+    }
+}
+```
+
+Out-of-range values are silently skipped in both forms.
 
 ## Open Issues / Limitations
 
@@ -140,7 +161,7 @@ The software is licensed under the MIT license.
 ## History
 
 **2026-02-11 V2.3.0**
-- Add `dispatch` for indexed function dispatch
+- Add `dispatch` for indexed function dispatch and inline dispatch
 - Add parameter count checking for user functions
 
 **2026-02-10 V2.2.0**

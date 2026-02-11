@@ -1313,6 +1313,13 @@ static void compile_free(void) {
 ** }
 ** Calls func_a() if expr==0, func_b() if expr==1, etc.
 ** If expr is out of range, the dispatch is skipped.
+**
+** dispatch(expr) {
+**     0: stmt
+**     1: { stmts }
+** }
+** Inline dispatch: executes code block based on index.
+** If expr is out of range, the dispatch is skipped.
 */
 static void compile_dispatch(void) {
     match('(');
@@ -1320,40 +1327,123 @@ static void compile_dispatch(void) {
     match(')');
     match(LBRACE);
 
-    // Emit opcode and placeholder for count
-    pCi->p_code[pCi->pc++] = k_DISPATCH_Nx;
-    uint16_t count_pos = pCi->pc;
-    pCi->p_code[pCi->pc++] = 0; // count placeholder
-
-    uint8_t count = 0;
+    // Skip empty lines to find first entry
     uint8_t tok = lookahead();
-
-    // Process dispatch entries (may span multiple lines)
-    while(tok != RBRACE) {
-        if(tok == 0) {
-            // End of line - read next line
-            if(!get_line()) break;
-            tok = lookahead();
-            continue;
-        }
-        tok = next();
-        if(tok != LABEL && tok != ID) {
-            error("function name expected", pCi->a_buff);
-            return;
-        }
-        uint16_t idx = pCi->sym_idx;
-        uint16_t addr = a_Symbol[idx].value;
-        // Register for forward declaration patching
-        forward_declaration(idx, pCi->pc);
-        pCi->p_code[pCi->pc++] = addr & 0xFF;
-        pCi->p_code[pCi->pc++] = (addr >> 8) & 0xFF;
-        count++;
+    while(tok == 0) {
+        if(!get_line()) break;
         tok = lookahead();
     }
-    match(RBRACE);
 
-    // Patch count
-    pCi->p_code[count_pos] = count;
+    if(tok == NUM) {
+        // Inline dispatch: 0: code, 1: code, ...
+        uint16_t case_addrs[32];
+        uint16_t goto_patches[32];
+
+        pCi->p_code[pCi->pc++] = k_DISPATCH_JMP_Nx;
+        uint16_t count_pos = pCi->pc;
+        pCi->p_code[pCi->pc++] = 0;  // count placeholder
+        uint16_t table_ref_pos = pCi->pc;
+        pCi->pc += 2;  // table address placeholder
+
+        uint8_t count = 0;
+
+        while(tok != RBRACE) {
+            if(tok == 0) {
+                if(!get_line()) break;
+                tok = lookahead();
+                continue;
+            }
+            tok = next();
+            if(tok != NUM) {
+                error("case number expected", pCi->a_buff);
+                return;
+            }
+            if(pCi->value != count) {
+                error("sequential case number expected", pCi->a_buff);
+                return;
+            }
+            match(':');
+
+            case_addrs[count] = pCi->pc;
+
+            tok = lookahead();
+            if(tok == LBRACE) {
+                match(LBRACE);
+                compile_stmts();
+                while(!BLOCKEND(lookahead())) {
+                    if(!get_line()) break;
+                    compile_line();
+                }
+                match(RBRACE);
+            } else if(tok != 0) {
+                compile_stmts();
+            }
+
+            // Emit GOTO end (to be patched)
+            pCi->p_code[pCi->pc++] = k_GOTO_N3;
+            goto_patches[count] = pCi->pc;
+            pCi->pc += 2;
+
+            count++;
+            if(count >= 32) {
+                error("too many dispatch cases", "");
+                return;
+            }
+            tok = lookahead();
+        }
+        match(RBRACE);
+
+        // Emit jump table after all case bodies
+        uint16_t table_addr = pCi->pc;
+        for(uint8_t i = 0; i < count; i++) {
+            pCi->p_code[pCi->pc++] = case_addrs[i] & 0xFF;
+            pCi->p_code[pCi->pc++] = (case_addrs[i] >> 8) & 0xFF;
+        }
+
+        // Patch header
+        pCi->p_code[count_pos] = count;
+        ACS16(pCi->p_code[table_ref_pos]) = table_addr;
+
+        // Patch GOTOs to end
+        uint16_t end_addr = pCi->pc;
+        for(uint8_t i = 0; i < count; i++) {
+            ACS16(pCi->p_code[goto_patches[i]]) = end_addr;
+        }
+    } else {
+        // Function dispatch: func_a func_b ...
+        pCi->p_code[pCi->pc++] = k_DISPATCH_Nx;
+        uint16_t count_pos = pCi->pc;
+        pCi->p_code[pCi->pc++] = 0; // count placeholder
+
+        uint8_t count = 0;
+
+        // Process dispatch entries (may span multiple lines)
+        while(tok != RBRACE) {
+            if(tok == 0) {
+                // End of line - read next line
+                if(!get_line()) break;
+                tok = lookahead();
+                continue;
+            }
+            tok = next();
+            if(tok != LABEL && tok != ID) {
+                error("function name expected", pCi->a_buff);
+                return;
+            }
+            uint16_t idx = pCi->sym_idx;
+            uint16_t addr = a_Symbol[idx].value;
+            // Register for forward declaration patching
+            forward_declaration(idx, pCi->pc);
+            pCi->p_code[pCi->pc++] = addr & 0xFF;
+            pCi->p_code[pCi->pc++] = (addr >> 8) & 0xFF;
+            count++;
+            tok = lookahead();
+        }
+        match(RBRACE);
+
+        // Patch count
+        pCi->p_code[count_pos] = count;
+    }
 }
 
 /**************************************************************************************************

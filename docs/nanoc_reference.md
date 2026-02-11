@@ -370,7 +370,9 @@ while (i < 10) {
 ```
 ### dispatch (Indexed Dispatch)
 
-Calls a function based on a 0-based index. If the index is out of range, the dispatch is silently skipped.
+#### Function Dispatch
+
+Calls a function based on a 0-based index (like GOSUB). If the index is out of range, the dispatch is silently skipped.
 
 ```c
 dispatch(expression) {
@@ -380,28 +382,33 @@ dispatch(expression) {
 }
 ```
 
+#### Inline Dispatch
+
+Executes code inline based on a 0-based index. The code runs in the current scope with access to all local variables and parameters. If the index is out of range, the dispatch is silently skipped.
+
+```c
+dispatch(expression) {
+    0: single_statement
+    1: another_statement
+    2: {
+        multi_line_block
+    }
+}
+```
+
 Example:
 
 ```c
-func handle_idle() {
-    printf("Idle\\n")
+func on_event(int32 id, int32 d1, int32 d2) {
+    dispatch(id) {
+        0: printf("idle\\n")
+        1: printf("run d1=%d d2=%d\\n", d1, d2)
+        2: {
+            int32 sum = d1 + d2
+            printf("error sum=%d\\n", sum)
+        }
+    }
 }
-
-func handle_running() {
-    printf("Running\\n")
-}
-
-func handle_error() {
-    printf("Error\\n")
-}
-
-int32 state = 1
-dispatch(state) {
-    handle_idle
-    handle_running
-    handle_error
-}
-// Output: "Running"
 ```
 ---
 
