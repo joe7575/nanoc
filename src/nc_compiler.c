@@ -30,7 +30,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include "nc_int.h"
 
 #define MAX_XFUNC_PARAMS    8
-#define MAX_CODE_PER_LINE   50 // aprox. max. 50 bytes per line
+#define MAX_CODE_PER_LINE   k_MAX_LINE_LEN // max. bytes per line (incl. string literals)
 #define BLOCKEND(tok)       (tok == ELSE || tok == NEXT || tok == RBRACE) 
 
 // Expression result types
@@ -1103,7 +1103,8 @@ static void compile_printf(void) {
     match(STR);
     uint16_t len = strlen(pCi->a_buff);
     pCi->a_buff[len - 1] = '\0'; // remove closing quote
-    strcpy(fmt_buf, pCi->a_buff + 1); // skip opening quote
+    strncpy(fmt_buf, pCi->a_buff + 1, sizeof(fmt_buf) - 1); // skip opening quote
+    fmt_buf[sizeof(fmt_buf) - 1] = '\0';
     uint16_t fmt_len = strlen(fmt_buf) + 1; // include null terminator
     
     // Count format specifiers in format string
@@ -1132,10 +1133,14 @@ static void compile_printf(void) {
     match(')');
     
     // Emit opcode with format string
+    if(pCi->pc + 3 + fmt_len > cfg_MAX_CODE_SIZE) {
+        error("code size exceeded", NULL);
+        return;
+    }
     pCi->p_code[pCi->pc++] = k_PRINTF_Nx;
     pCi->p_code[pCi->pc++] = num_args;
     pCi->p_code[pCi->pc++] = fmt_len;
-    strcpy((char*)&pCi->p_code[pCi->pc], fmt_buf);
+    memcpy(&pCi->p_code[pCi->pc], fmt_buf, fmt_len);
     pCi->pc += fmt_len;
 }
 
@@ -1511,7 +1516,8 @@ static uint16_t sym_add(char *id, uint32_t val, uint8_t type) {
     // Add new symbol
     for(uint16_t i = start; i < cfg_MAX_NUM_SYM; i++) {
         if(a_Symbol[i].name[0] == '\0') {
-            strcpy(a_Symbol[i].name, sym);
+            strncpy(a_Symbol[i].name, sym, k_MAX_SYM_LEN - 1);
+            a_Symbol[i].name[k_MAX_SYM_LEN - 1] = '\0';
             a_Symbol[i].value = val;
             a_Symbol[i].type = type;
             a_Symbol[i].is_local = 0;     // Default: global
@@ -1986,9 +1992,13 @@ static type_t compile_factor(void) {
         // push string address
         uint16_t len = strlen(pCi->a_buff);
         pCi->a_buff[len - 1] = '\0';
+        if(pCi->pc + 2 + len - 1 > cfg_MAX_CODE_SIZE) {
+            error("code size exceeded", NULL);
+            break;
+        }
         pCi->p_code[pCi->pc++] = k_PUSH_STR_Nx;
         pCi->p_code[pCi->pc++] = len - 1; // without quotes but with 0
-        strcpy((char*)&pCi->p_code[pCi->pc], pCi->a_buff + 1);
+        memcpy(&pCi->p_code[pCi->pc], pCi->a_buff + 1, len - 1);
         pCi->pc += len - 1;
         type = e_STR;
         break;
