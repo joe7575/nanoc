@@ -7,6 +7,7 @@
   - [Introduction](#introduction)
     - [Character Set](#character-set)
     - [Comments](#comments)
+    - [Multiple Statements per Line](#multiple-statements-per-line)
     - [Constants](#constants)
     - [Variables](#variables)
     - [Array Variables](#array-variables)

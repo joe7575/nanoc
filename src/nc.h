@@ -1,6 +1,6 @@
 /*
 
-Copyright 2024-2025 Joachim Stolberg
+Copyright 2024-2026 Joachim Stolberg
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 and associated documentation files (the “Software”), to deal in the Software without restriction,
@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include <stdbool.h>
 #include "nc_cfg.h"
 
-#define SVERSION "2.3.0"
+#define SVERSION "2.3.1"
 
 /*
 ** Data types for 'nc_define_external_function()'
