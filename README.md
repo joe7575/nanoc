@@ -151,8 +151,9 @@ Out-of-range values are silently skipped in both forms.
 
 - No parameter type checking for user functions.
   Passing wrong types (e.g. string instead of int32) may cause runtime errors.
-- Function-local arrays are not supported. Therefore, it should not be 
-  possible to define function-local arrays.
+- Function-local arrays are not supported. The compiler rejects
+  `int32 arr[N]` inside functions with an error message.
+  Use global arrays or array reference parameters (`int32[]`) instead.
 
 ## License
 
@@ -161,6 +162,9 @@ Copyright (C) 2024-2026 Joachim Stolberg
 The software is licensed under the MIT license.
 
 ## History
+
+**2026-02-12 V2.3.1**
+- Reject function-local array declarations with error message
 
 **2026-02-11 V2.3.0**
 - Add `dispatch` for indexed function dispatch and inline dispatch

@@ -656,9 +656,10 @@ class NcChecker:
 
         if self.peek_type() == LBRACKET:
             # Array: int32 arr[size]
-            self.sym_add(name, ARR, is_local=self.in_func, is_array=True)
             if self.in_func:
-                self.local_vars.add(name)
+                self.error("function-local arrays are not supported", name)
+                return
+            self.sym_add(name, ARR, is_local=False, is_array=True)
             self.match(LBRACKET)
             self.compile_expression()
             self.match(RBRACKET)

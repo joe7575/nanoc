@@ -621,3 +621,4 @@ end
 - Parameters per function: max 8
 - No floating-point numbers
 - No multi-dimensional arrays
+- No function-local array declarations (use global arrays or array reference parameters)

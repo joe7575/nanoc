@@ -838,6 +838,11 @@ static void compile_int32_decl(void) {
     // Check if this is an array declaration
     uint8_t next_tok = lookahead();
     if(next_tok == LBRACKET) {
+        // Function-local arrays are not supported
+        if(pCi->in_func) {
+            error("function-local arrays are not supported", NULL);
+            return;
+        }
         // Array declaration: int32 arr[size]
         a_Symbol[idx].type = ARR;
         match(LBRACKET);

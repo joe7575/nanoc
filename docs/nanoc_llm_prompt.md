@@ -226,4 +226,5 @@ func example(int32 param) {    // param is LOCAL
 - Parameters: max 8 per function
 - No float/double
 - No multi-dim arrays
+- No function-local arrays (declare arrays globally or pass via `int32[]` parameter)
 - `arr[i]++` not supported, use `arr[i] = arr[i] + 1`
