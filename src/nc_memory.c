@@ -108,7 +108,9 @@ void nc_mem_free(t_VM *p_vm, uint16_t addr) {
 // Allocate a bigger block if necessary
 uint16_t nc_mem_realloc(t_VM *p_vm, uint16_t addr, uint16_t bytes) {
     if(addr > 0x7FFF && bytes <= cfg_MAX_MEM_BLOCK_SIZE) {
-        uint16_t buff_size = (p_vm->heap[(addr & 0x7FFF) - 1] * sizeof(uint32_t)) - HEADER_SIZE;
+        uint16_t idx = (addr & 0x7FFF);
+        if(idx < HEADER_SIZE || idx >= cfg_MEM_HEAP_SIZE) return 0;
+        uint16_t buff_size = (p_vm->heap[idx - 1] * sizeof(uint32_t)) - HEADER_SIZE;
         if(buff_size >= bytes) {
             return addr;
         }

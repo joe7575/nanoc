@@ -993,7 +993,7 @@ static char *get_string(t_VM *vm, uint16_t addr) {
     } else if(addr == 0) {
         return "";
     } else {
-        if(vm->code[addr] == 0) {
+        if(addr >= cfg_MAX_CODE_SIZE || vm->code[addr] == 0) {
             return "";
         }
         return (char*)&vm->code[addr];
