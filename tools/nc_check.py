@@ -826,7 +826,8 @@ class NcChecker:
                         break
             self.match(RBRACE)
         else:
-            # Function dispatch: func_a func_b ...
+            # Function dispatch: func_a, func_b, ...
+            first = True
             while self.peek_type() != RBRACE:
                 if self.at_end():
                     if not self.read_next_line():
@@ -834,6 +835,16 @@ class NcChecker:
                     continue
                 if self.peek_type() == RBRACE:
                     break
+                if not first:
+                    if self.peek_type() == ord(','):
+                        self.next()  # skip comma
+                        # May need next line after comma
+                        while self.at_end():
+                            if not self.read_next_line():
+                                break
+                    else:
+                        self.error("',' expected between dispatch entries")
+                first = False
                 tok = self.next()
                 if tok.type not in (ID, LABEL):
                     self.error("function name expected", tok.text)

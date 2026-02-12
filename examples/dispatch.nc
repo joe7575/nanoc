@@ -19,8 +19,8 @@ printf("=== Function Dispatch ===\n")
 for i = 0 to 2 {
     printf("Dispatching index %d: ", i)
     dispatch(i) {
-        handler_a
-        handler_b
+        handler_a,
+        handler_b,
         handler_c
     }
 }
@@ -50,6 +50,8 @@ on_event(2, 50, 60)
 printf("Out of range: ")
 dispatch(99) {
     0: printf("FAIL\n")
+    1: // nothing to do
+    2: // nothing to do
 }
 printf("(skipped)\n")
 

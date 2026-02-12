@@ -112,8 +112,8 @@ while (x > 0) {
 
 // dispatch (indexed function dispatch, 0-based)
 dispatch(state) {
-    handler_idle
-    handler_running
+    handler_idle,
+    handler_running,
     handler_error
 }
 // Calls handler_idle() if state==0, handler_running() if state==1, etc.

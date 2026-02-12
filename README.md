@@ -126,7 +126,7 @@ func handler_b() {
 }
 
 dispatch(idx) {
-    handler_a
+    handler_a,
     handler_b
 }
 ```

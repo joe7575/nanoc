@@ -397,8 +397,8 @@ Calls a function based on a 0-based index (like GOSUB). If the index is out of r
 
 ```c
 dispatch(expression) {
-    function_name_0
-    function_name_1
+    function_name_0,
+    function_name_1,
     function_name_2
 }
 ```

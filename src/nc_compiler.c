@@ -1429,7 +1429,7 @@ static void compile_dispatch(void) {
 
         uint8_t count = 0;
 
-        // Process dispatch entries (may span multiple lines)
+        // Process dispatch entries (comma-separated, may span multiple lines)
         while(tok != RBRACE) {
             if(tok == 0) {
                 // End of line - read next line
@@ -1450,6 +1450,19 @@ static void compile_dispatch(void) {
             pCi->p_code[pCi->pc++] = (addr >> 8) & 0xFF;
             count++;
             tok = lookahead();
+            // Skip empty lines after entry
+            while(tok == 0) {
+                if(!get_line()) break;
+                tok = lookahead();
+            }
+            // Expect comma between entries
+            if(tok == ',') {
+                next();  // skip comma
+                tok = lookahead();
+            } else if(tok != RBRACE) {
+                error("',' expected between dispatch entries", pCi->a_buff);
+                return;
+            }
         }
         match(RBRACE);
 
