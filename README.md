@@ -32,6 +32,9 @@ This software is written from scratch in C.
     // Output
     printf("value = %d, hex = %h, str = %s\n", num, num, str)
 
+    // Multiple statements on one line
+    x = 1; y = 2; z = 3
+
     // Operators
     and, or, not, ==, !=, <, >, <=, >=
     +, -, *, /, mod
@@ -151,9 +154,6 @@ Out-of-range values are silently skipped in both forms.
 
 - No parameter type checking for user functions.
   Passing wrong types (e.g. string instead of int32) may cause runtime errors.
-- Function-local arrays are not supported. The compiler rejects
-  `int32 arr[N]` inside functions with an error message.
-  Use global arrays or array reference parameters (`int32[]`) instead.
 
 ## License
 

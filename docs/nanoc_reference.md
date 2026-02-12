@@ -64,6 +64,16 @@ NanoC supports C-style single-line comments:
 int32 x = 10  // inline comment
 ```
 
+### Multiple Statements per Line
+
+Multiple statements can be written on one line, separated by `;`:
+
+```c
+x = 1; y = 2; z = 3
+```
+
+Semicolons are **not** required at the end of statements.
+
 ### Constants
 
 NanoC supports integer and string constants:

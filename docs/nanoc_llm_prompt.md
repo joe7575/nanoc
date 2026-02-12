@@ -10,7 +10,7 @@ You are generating code for **NanoC**, a simple C-like language for embedded sys
 4. Use `==` for equality, `!=` for inequality
 5. Keywords are lowercase: `func`, `int32`, `return`, `if`, `else`, `for`, `while`
 6. String variables MUST end with `$`: `name$`, `text$`
-7. No semicolons at end of statements
+7. No semicolons at end of statements (but `;` can separate multiple statements on one line)
 8. No floating-point - integers only (int32)
 
 ## FORBIDDEN - NEVER USE
