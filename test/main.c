@@ -37,6 +37,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 
 // KV-Store instances (max 4 stores supported)
 #define MAX_KVS_STORES 4
+
+#define kSETCUR             (NB_XFUNC + 0)
+#define kCLRSCR             (NB_XFUNC + 1)
+#define kCLRLINE            (NB_XFUNC + 2)
+#define kTIME               (NB_XFUNC + 3)
+#define kSLEEP              (NB_XFUNC + 4)
+#define kINPUT              (NB_XFUNC + 5)
+#define kINPUT_STR          (NB_XFUNC + 6)
+#define kCMD                (NB_XFUNC + 7)
+#define kSGN                (NB_XFUNC + 8)
+#define kKVS_CREATE         (NB_XFUNC + 9)
+#define kKVS_SET            (NB_XFUNC + 10)
+#define kKVS_GET            (NB_XFUNC + 11)
+#define kFIRE_ON_CAN        (NB_XFUNC + 12)
+
 // Memory: 8 bytes header + 256 entries * 8 bytes each = 2056 bytes per store
 #define KVS_MEM_SIZE 2056
 static kvs_store_t *kvs_stores[MAX_KVS_STORES] = {NULL};
@@ -110,20 +125,20 @@ int main(int argc, char* argv[]) {
 #if defined(cfg_DATA_ACCESS) && !defined(cfg_STRING_SUPPORT)
     assert(nc_define_external_function("send", 3, (uint8_t[]){NB_NUM, NB_NUM, NB_REF}, NB_NONE) == NB_XFUNC + 0);
 #elif defined(cfg_STRING_SUPPORT)
-    assert(nc_define_external_function("setcur", 2, (uint8_t[]){NB_NUM, NB_NUM}, NB_NONE) == NB_XFUNC + 0);
-    assert(nc_define_external_function("clrscr", 0, NULL, NB_NONE) == NB_XFUNC + 1);
-    assert(nc_define_external_function("clrline", 1, (uint8_t[]){NB_NUM}, NB_NONE) == NB_XFUNC + 2);
-    assert(nc_define_external_function("time", 0, NULL, NB_NUM) == NB_XFUNC + 3);
-    assert(nc_define_external_function("sleep", 1, (uint8_t[]){NB_NUM}, NB_NONE) == NB_XFUNC + 4);
-    assert(nc_define_external_function("input", 1, (uint8_t[]){NB_STR}, NB_NUM) == NB_XFUNC + 5);
-    assert(nc_define_external_function("input$", 1, (uint8_t[]){NB_STR}, NB_STR) == NB_XFUNC + 6);
-    assert(nc_define_external_function("cmd", 3, (uint8_t[]){NB_NUM, NB_ANY, NB_ANY}, NB_NUM) == NB_XFUNC + 7);
-    assert(nc_define_external_function("sgn", 1, (uint8_t[]){NB_NUM}, NB_NUM) == NB_XFUNC + 8);
-    assert(nc_define_external_function("kvs_create", 2, (uint8_t[]){NB_NUM, NB_NUM}, NB_NUM) == NB_XFUNC + 9);
-    assert(nc_define_external_function("kvs_set", 3, (uint8_t[]){NB_NUM, NB_NUM, NB_NUM}, NB_NONE) == NB_XFUNC + 10);
-    assert(nc_define_external_function("kvs_get", 2, (uint8_t[]){NB_NUM, NB_NUM}, NB_NUM) == NB_XFUNC + 11);
+    assert(nc_define_external_function("setcur", 2, (uint8_t[]){NB_NUM, NB_NUM}, NB_NONE) == kSETCUR);
+    assert(nc_define_external_function("clrscr", 0, NULL, NB_NONE) == kCLRSCR);
+    assert(nc_define_external_function("clrline", 1, (uint8_t[]){NB_NUM}, NB_NONE) == kCLRLINE);
+    assert(nc_define_external_function("time", 0, NULL, NB_NUM) == kTIME);
+    assert(nc_define_external_function("sleep", 1, (uint8_t[]){NB_NUM}, NB_NONE) == kSLEEP);
+    assert(nc_define_external_function("input", 1, (uint8_t[]){NB_STR}, NB_NUM) == kINPUT);
+    assert(nc_define_external_function("input$", 1, (uint8_t[]){NB_STR}, NB_STR) == kINPUT_STR);
+    assert(nc_define_external_function("cmd", 3, (uint8_t[]){NB_NUM, NB_ANY, NB_ANY}, NB_NUM) == kCMD);
+    assert(nc_define_external_function("sgn", 1, (uint8_t[]){NB_NUM}, NB_NUM) == kSGN);
+    assert(nc_define_external_function("kvs_create", 2, (uint8_t[]){NB_NUM, NB_NUM}, NB_NUM) == kKVS_CREATE);
+    assert(nc_define_external_function("kvs_set", 3, (uint8_t[]){NB_NUM, NB_NUM, NB_NUM}, NB_NONE) == kKVS_SET);
+    assert(nc_define_external_function("kvs_get", 2, (uint8_t[]){NB_NUM, NB_NUM}, NB_NUM) == kKVS_GET);
     // Event trigger function: fire_on_can(id, data1, data2) -> calls on_can: label
-    assert(nc_define_external_function("fire_on_can", 4, (uint8_t[]){NB_NUM, NB_NUM, NB_NUM, NB_REF}, NB_NONE) == NB_XFUNC + 12);
+    assert(nc_define_external_function("fire_on_can", 4, (uint8_t[]){NB_NUM, NB_NUM, NB_NUM, NB_REF}, NB_NONE) == kFIRE_ON_CAN);
 #endif
 
     void *instance = nc_create();
