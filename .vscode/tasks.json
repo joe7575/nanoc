@@ -1,0 +1,44 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "CMake: build",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"--build",
+				"${workspaceFolder}/build",
+				"--config",
+				"Debug"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": "$gcc"
+		},
+		{
+			"label": "CMake: configure",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"-S",
+				"${workspaceFolder}",
+				"-B",
+				"${workspaceFolder}/build",
+				"-DCMAKE_BUILD_TYPE=Debug"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Build NanoC",
+			"type": "shell",
+			"command": "cmake --build build --config Debug"
+		},
+		{
+			"label": "Build and Test NanoC",
+			"type": "shell",
+			"command": "cmake --build build --config Debug && echo BUILD_OK"
+		}
+	]
+}
