@@ -2,7 +2,7 @@ NanoC
 =====
 
 A small C-style compiler with virtual machine for embedded systems.
-This software is written from scratch in C.
+NanoC is derived from [NanoBasic](https://github.com/joe7575/nanobasic). While much of the codebase has been rewritten in C, some features — such as string processing functions and the for-loop — retain BASIC-like characteristics. NanoC also uses a nearly identical virtual machine to NanoBasic.
 
 ## Language Features
 
