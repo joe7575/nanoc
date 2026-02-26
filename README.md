@@ -30,7 +30,7 @@ NanoC is derived from [NanoBasic](https://github.com/joe7575/nanobasic). While m
     }
 
     // Output
-    printf("value = %d, hex = %h, str = %s\n", num, num, str)
+    printf("value = %d, unsigned = %u, hex = %h, str = %s\n", num, num, num, str)
 
     // Multiple statements on one line
     x = 1; y = 2; z = 3
@@ -162,6 +162,11 @@ Copyright (C) 2024-2026 Joachim Stolberg
 The software is licensed under the MIT license.
 
 ## History
+
+**2026-02-26 V2.3.2**
+- Add `%u` (unsigned decimal) format specifier to `printf`
+- Add `\a` (BEL/end-of-output) escape sequence to `printf`
+- Fix param stack size check (use `cfg_PARAMSTACK_SIZE` instead of `cfg_STACK_SIZE`)
 
 **2026-02-12 V2.3.1**
 - Reject function-local array declarations with error message

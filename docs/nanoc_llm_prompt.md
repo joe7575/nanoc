@@ -28,9 +28,10 @@ You are generating code for **NanoC**, a simple C-like language for embedded sys
 ### Variable Declarations
 ```c
 int32 x = 0           // signed 32-bit integer
+int32 x = 0xFF        // hex literal (0x prefix supported)
 int32 arr[100]        // array of 100 elements
 str8 name$ = "Hello"  // string (must end with $)
-const MAX = 100       // compile-time constant
+const MAX = 0x100     // constant can also use hex literals
 ```
 
 ### Array Reference Parameters
@@ -141,8 +142,9 @@ Increment:  ++ --
 
 ### Output
 ```c
-printf("Value: %d\n", x)      // %d=int, %s=string, %h=hex
+printf("Value: %d\n", x)      // %d=signed int, %u=unsigned int, %s=string, %h=hex
 printf("Name: %s\n", name$)   // string output
+// Escape sequences: \n=newline, \t=tab, \a=BEL/end-of-output, \\=backslash
 ```
 
 ### String Functions

@@ -43,8 +43,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #define TOP()   vm->stack[(uint16_t)(vm->sp - 1) % cfg_STACK_SIZE]
 #define PEEK(x) vm->stack[(uint16_t)(vm->sp + (x)) % cfg_STACK_SIZE]
 
-#define PPUSH(x) vm->paramstack[(uint8_t)(vm->psp++) % cfg_STACK_SIZE] = x
-#define PPOP()   vm->paramstack[(uint8_t)(--vm->psp) % cfg_STACK_SIZE]
+#define PPUSH(x) vm->paramstack[(uint8_t)(vm->psp++) % cfg_PARAMSTACK_SIZE] = x
+#define PPOP()   vm->paramstack[(uint8_t)(--vm->psp) % cfg_PARAMSTACK_SIZE]
 
 /***************************************************************************************************
 **    static function-prototypes
@@ -117,12 +117,12 @@ int32_t nc_peek_num(void *pv_vm, uint8_t idx) {
     if(vm->psp < idx) {
         return -1;
     }
-    return vm->paramstack[(vm->psp - idx) % cfg_STACK_SIZE];
+    return vm->paramstack[(vm->psp - idx) % cfg_PARAMSTACK_SIZE];
 }
 
 void nc_push_num(void *pv_vm, int32_t value) {
     t_VM *vm = pv_vm;
-    if(vm->psp < cfg_STACK_SIZE) {
+    if(vm->psp < cfg_PARAMSTACK_SIZE) {
         PPUSH(value);
     }
 }
@@ -142,7 +142,7 @@ void nc_push_str(void *pv_vm, char *str) {
     t_VM *vm = pv_vm;
     uint16_t addr;
     char *ptr;
-    if(vm->psp < cfg_STACK_SIZE) {
+    if(vm->psp < cfg_PARAMSTACK_SIZE) {
         ptr = alloc_temp_string(vm, &addr);
         strncpy(ptr, str, sizeof(vm->strbuf1));
         PPUSH(addr);
@@ -929,6 +929,7 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
                 if(*p == '\\' && *(p+1)) {
                     p++;
                     switch(*p) {
+                        case 'a': nc_print("\a"); break;
                         case 'n': nc_print("\n"); break;
                         case 't': nc_print("\t"); break;
                         case '\\': nc_print("\\"); break;
@@ -938,6 +939,7 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
                     p++;
                     switch(*p) {
                         case 'd': nc_print("%d", (int)args[arg_idx++]); break;
+                        case 'u': nc_print("%u", (unsigned)args[arg_idx++]); break;
                         case 'h': nc_print("%X", (unsigned)args[arg_idx++]); break;
                         case 's': nc_print("%s", get_string(vm, args[arg_idx++])); break;
                         case '%': nc_print("%%"); break;

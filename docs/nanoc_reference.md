@@ -80,12 +80,14 @@ Semicolons are **not** required at the end of statements.
 NanoC supports integer and string constants:
 
 ```c
-1234        // integer constant
+1234        // decimal integer constant
 -42         // negative integer
+0xFF        // hexadecimal integer constant (0x prefix, case-insensitive)
+0x1A2B      // larger hex constant
 "Hello"     // string constant
 ```
 
-Numeric constants are 32-bit signed integers in the range -2,147,483,648 to 2,147,483,647.
+Numeric constants are 32-bit signed integers in the range -2,147,483,648 to 2,147,483,647. Hexadecimal literals use the `0x` or `0X` prefix.
 
 Named constants are defined with `const`:
 
@@ -462,15 +464,23 @@ Formatted output (C-style):
 
 ```c
 printf("Value: %d\n", x)
+printf("Unsigned: %u\n", x)
 printf("Name: %s, Age: %d\n", name$, age)
 printf("Hex: %h\n", value)
 ```
 
 Format specifiers:
-- `%d` - decimal integer
-- `%h` - hexadecimal integer
+- `%d` - decimal integer (signed)
+- `%u` - decimal integer (unsigned)
+- `%h` - hexadecimal integer (uppercase)
 - `%s` - string
+- `%%` - literal percent sign
+
+Escape sequences:
 - `\n` - newline
+- `\t` - tab
+- `\a` - BEL / end-of-output signal
+- `\\` - literal backslash
 
 ### reti
 

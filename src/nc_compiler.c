@@ -1089,8 +1089,8 @@ static void compile_return(void) {
 
 /*
 ** printf("format %d %s\n", value, string$)
-** Format specifiers: %d (decimal), %h (hex), %s (string), %% (percent)
-** Escape sequences: \n (newline), \t (tab), \\ (backslash)
+** Format specifiers: %d (decimal), %u (unsigned decimal), %h (hex), %s (string), %% (percent)
+** Escape sequences: \a (BEL/end-of-output), \n (newline), \t (tab), \\ (backslash)
 */
 static void compile_printf(void) {
     uint8_t tok;
