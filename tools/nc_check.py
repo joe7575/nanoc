@@ -68,7 +68,7 @@ KEYWORDS = {
     "const": NC_CONST, "instr": INSTR, "free": FREE, "rnd": RND,
     "abs": ABS,
     "printf": PRINTF, "dispatch": DISPATCH,
-    "val": VAL, "param": PARAM, "params": PARAMS,
+    "val": VAL,
 }
 
 # Known external functions (from test/main.c) — user can extend this list
@@ -154,13 +154,20 @@ def tokenize_line(line):
             i = j
             continue
 
-        # Number
+        # Number (decimal or hex 0x...)
         if c.isdigit():
             j = i
-            while j < n and line[j].isdigit():
-                j += 1
-            text = line[i:j]
-            yield Token(NUM, int(text), text)
+            if line[i:i+2].lower() == '0x':
+                j = i + 2
+                while j < n and line[j] in '0123456789abcdefABCDEF':
+                    j += 1
+                text = line[i:j]
+                yield Token(NUM, int(text, 16), text)
+            else:
+                while j < n and line[j].isdigit():
+                    j += 1
+                text = line[i:j]
+                yield Token(NUM, int(text), text)
             i = j
             continue
 
@@ -1144,14 +1151,6 @@ class NcChecker:
             self.compile_expression()
             self.match(',')
             self.compile_expression()
-            self.match(')')
-        elif t == PARAM:
-            self.next()
-            self.match('(')
-            self.match(')')
-        elif t == PARAMS:
-            self.next()
-            self.match('(')
             self.match(')')
         elif t == FREE:
             self.next()

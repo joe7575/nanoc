@@ -178,6 +178,7 @@ void nc_init(void) {
     sym_add("right$", 0, RIGHTS);
     sym_add("mid$", 0, MIDS);
     sym_add("len", 0, LEN);
+    sym_add("val", 0, VAL);
     sym_add("str$", 0, STRS);
     sym_add("hex$", 0, HEXS);
     sym_add("NULL", 0, NIL);
