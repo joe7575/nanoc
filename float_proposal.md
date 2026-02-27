@@ -72,11 +72,35 @@ Für die Ausgabe von float32-Werten wird printf um die Formate %f und %g erweite
 
 `hex$` ist nur für int32 sinnvoll.
 
-## Fragen
+## Designentscheidungen
 
-- Besser "Funktionen" wie toint32(float32 val) als cast?
-  Ein expliziter Cast (int32) ist für eine C-ähnliche Sprache intuitiver und kompakter als eine Funktion. Die Frage ist hier aber, macht das den Compiler komplizierter? 
+- **Cast-Syntax**: `(float32)x` und `(int32)y` sind einer Funktionssyntax vorzuziehen –
+  kompakter und für eine C-ähnliche Sprache intuitiver. Die Cast-Syntax erfordert im Parser
+  einen kurzen Lookahead, ist aber klar implementierbar.
 
-- Macht bei den Vergleichsoperatoren für float32 eine Toleranz für Ungenauigkeiten
-  Sinn, oder soll `==` ganz unzulässig sein? (Vorschlag: `==` für float32 verbieten,
-  stattdessen `abs(a - b) < epsilon` verwenden)
+- **`==` für float32 verboten**: Float-Gleichheitsvergleich ist in Embedded-Kontexten
+  fast immer ein Bug. Stattdessen `abs(a - b) < epsilon` verwenden.
+
+## Offene Implementierungsfragen
+
+- **`ret_val` in der VM** ist aktuell `int32_t` – müsste zu `uint32_t` (oder einer Union)
+  werden, damit float-Rückgabewerte bitweise korrekt transportiert werden.
+
+- **Externe Funktionen**: `nc_pop_num`/`nc_push_num` arbeiten auf `int32_t`.
+  Für float-taugliche External-Functions wären `nc_pop_float`/`nc_push_float`
+  sowie eine neue Typkonstante `NB_FLOAT` erforderlich.
+
+- **`abs`**: Als Built-in-Opcode `k_ABS_N1` realisiert (analog zu `k_RND_N1`).
+  ✓ Implementiert für int32. Für float32 wäre ein separater `k_FABS_N1`-Opcode nötig.
+
+- **`str$` vs. `gstr$`**: `str$` intern mit `%g` reicht aus, wenn `str$` ohnehin
+  nur formatted-output ist. `gstr$` als Alias ist nicht notwendig.
+
+## Status
+
+**Implementierung aktuell nicht geplant.** Der Footprint würde durch zusätzliche
+Float-Opcodes, erweiterte Symboltabelle (Typtracking) und neue API-Funktionen
+spürbar steigen. Der konkrete Mehrwert für die Zielplattformen muss erst
+geklärt werden, bevor mit der Umsetzung begonnen wird.
+
+Wenn die Implementierung erfolgt, ist zu klären, ob die Float-Operationen auch für externe Funktionen verfügbar sein sollen, oder ob sie auf interne VM-Operationen beschränkt bleiben. Aktuell sehe ich keinen Bedarf für Float-External-Functions, da die meisten Anwendungsfälle in Embedded-Umgebungen mit Integer-Arithmetik auskommen.

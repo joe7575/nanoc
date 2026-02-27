@@ -84,6 +84,7 @@ enum {
     k_PUSH_PARAM_N1,      // (push value to parameter stack)
     k_FREE_N1,            // (free memory)
     k_RND_N1,             // (random number)
+    k_ABS_N1,             // (absolute value)
     k_ADD_STR_N1,         // (add two strings from stack)
     k_STR_EQUAL_N1,       // (compare two values from stack)
     k_STR_NOT_EQU_N1,     // (compare two values from stack)
@@ -154,6 +155,7 @@ enum {
     RET,                         // 213 (return statement)
     DISPATCH,                    // 214 (indexed dispatch)
     SHL, SHR,                    // 215 - 216 (bit shift operators)
+    ABS,                         // 217 (absolute value)
 };
 
 // Symbol table

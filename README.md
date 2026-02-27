@@ -42,7 +42,7 @@ NanoC is derived from [NanoBasic](https://github.com/joe7575/nanobasic). While m
     ++, --   (increment/decrement)
 
     // Built-in functions
-    rnd, len, mid$, left$, right$, str$, hex$, instr, string$
+    rnd, abs, len, mid$, left$, right$, str$, hex$, instr, string$
 ```
 
 Byte/Word access functions (optional):
@@ -162,6 +162,9 @@ Copyright (C) 2024-2026 Joachim Stolberg
 The software is licensed under the MIT license.
 
 ## History
+
+**2026-02-27 V2.3.3**
+- Add `abs(n)` built-in function for int32 absolute value
 
 **2026-02-26 V2.3.2**
 - Add `%u` (unsigned decimal) format specifier to `printf`

@@ -187,6 +187,7 @@ void nc_init(void) {
     sym_add("instr", 0, INSTR);
     sym_add("free", 0, FREE);
     sym_add("rnd", 0, RND);
+    sym_add("abs", 0, ABS);
     sym_add("printf", 0, PRINTF);
     sym_add("dispatch", 0, DISPATCH);
     StartOfVars = CurrVarIdx;
@@ -2108,6 +2109,14 @@ static type_t compile_factor(void) {
         compile_expression(e_NUM);
         match(')');
         pCi->p_code[pCi->pc++] = k_RND_N1;
+        type = e_NUM;
+        break;
+    case ABS: // Absolute value
+        match(ABS);
+        match('(');
+        compile_expression(e_NUM);
+        match(')');
+        pCi->p_code[pCi->pc++] = k_ABS_N1;
         type = e_NUM;
         break;
     case LABEL: // Function call with return value: func(args)

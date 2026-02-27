@@ -46,6 +46,7 @@ INC = 209; DEC = 210
 LOCAL = 211; FUNC = 212; RET = 213
 DISPATCH = 214
 SHL = 215; SHR = 216
+ABS = 217
 e_CNST = 250  # Internal: compile-time constant
 
 # Special single-char tokens returned as ord(char)
@@ -65,6 +66,7 @@ KEYWORDS = {
     "len": LEN, "str$": STRS, "hex$": HEXS,
     "NULL": NIL, "string$": STRINGS,
     "const": NC_CONST, "instr": INSTR, "free": FREE, "rnd": RND,
+    "abs": ABS,
     "printf": PRINTF, "dispatch": DISPATCH,
     "val": VAL, "param": PARAM, "params": PARAMS,
 }
@@ -1054,6 +1056,11 @@ class NcChecker:
         elif t == NIL:
             self.next()
         elif t == RND:
+            self.next()
+            self.match('(')
+            self.compile_expression()
+            self.match(')')
+        elif t == ABS:
             self.next()
             self.match('(')
             self.compile_expression()

@@ -502,9 +502,11 @@ func on_can(int32 id, int32 data) {
 | Function | Description |
 |----------|-------------|
 | `rnd(n)` | Random number from 0 to n-1 |
+| `abs(n)` | Absolute value of n |
 
 ```c
 int32 dice = rnd(6) + 1   // 1-6
+int32 dist = abs(a - b)   // absolute difference
 ```
 
 ### String Functions

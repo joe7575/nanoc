@@ -778,6 +778,11 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             }
             pc += 1;
             break;
+        case k_ABS_N1:
+            tmp1 = POP();
+            PUSH(tmp1 < 0 ? -tmp1 : tmp1);
+            pc += 1;
+            break;
 #ifdef cfg_STRING_SUPPORT
         case k_ADD_STR_N1:
             tmp2 = POP();
