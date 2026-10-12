@@ -17,6 +17,8 @@ NanoC is derived from [NanoBasic](https://github.com/joe7575/nanobasic). While m
     // Control flow (C-style blocks)
     if (condition) {
         statements...
+    } else if (condition) {
+        statements...
     } else {
         statements...
     }
@@ -25,7 +27,7 @@ NanoC is derived from [NanoBasic](https://github.com/joe7575/nanobasic). While m
         statements...
     }
 
-    for i = 1 to 10 {
+    for i = 1 to 10 step 2 {
         statements...
     }
 
@@ -36,13 +38,13 @@ NanoC is derived from [NanoBasic](https://github.com/joe7575/nanobasic). While m
     x = 1; y = 2; z = 3
 
     // Operators
-    and, or, not, ==, !=, <, >, <=, >=
-    +, -, *, /, mod
-    &, |, ^  (bitwise)
+    and, or, not, &&, ||, !, ==, !=, <, >, <=, >=
+    +, -, *, /, mod, %
+    &, |, ^, <<, >>  (bitwise)
     ++, --   (increment/decrement)
 
     // Built-in functions
-    rnd, abs, len, mid$, left$, right$, str$, hex$, instr, string$
+    rnd, abs, len, val, mid$, left$, right$, str$, hex$, instr, string$, free
 ```
 
 Byte/Word access functions (optional):
@@ -149,6 +151,21 @@ func on_event(int32 id, int32 d1, int32 d2) {
 ```
 
 Out-of-range values are silently skipped in both forms.
+
+Inline dispatch case values can be numbers or `const` names (0..31), in any order and with gaps;
+the compiler builds the jump table. Gaps are skipped like out-of-range values.
+
+```c
+const IDLE = 0
+const RUN = 1
+const ERROR = 3
+
+dispatch(state) {
+    ERROR: printf("error\n")
+    IDLE: printf("idle\n")
+    RUN: printf("running\n")
+}
+```
 
 ## Open Issues / Limitations
 
