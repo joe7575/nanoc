@@ -799,9 +799,9 @@ class NcChecker:
 
         t = self.peek_type()
 
-        if t == NUM:
-            # Inline dispatch: 0: code, 1: code, ...
-            count = 0
+        if t == NUM or (t == ID and self.sym_type(self.lookahead().value) == e_CNST):
+            # Inline dispatch: case values are numbers or constants 0..31, any order
+            seen = set()
             while self.peek_type() != RBRACE:
                 if self.at_end():
                     if not self.read_next_line():
@@ -812,12 +812,20 @@ class NcChecker:
                     break
 
                 tok = self.next()
-                if tok.type != NUM:
-                    self.error("case number expected", tok.text)
+                if tok.type == NUM:
+                    value = tok.value
+                elif tok.type == ID and self.sym_type(tok.value) == e_CNST:
+                    value = self.constants.get(tok.value, -1)
+                else:
+                    self.error("case value expected", tok.text)
                     return
-                if tok.value != count:
-                    self.error("sequential case number expected", tok.text)
+                if not 0 <= value < 32:
+                    self.error("case value out of range (0..31)", tok.text)
                     return
+                if value in seen:
+                    self.error("duplicate case value", tok.text)
+                    return
+                seen.add(value)
                 self.match(':')
 
                 if self.peek_type() == LBRACE:
@@ -826,8 +834,6 @@ class NcChecker:
                     self.match(RBRACE)
                 elif not self.at_end() and self.peek_type() != RBRACE:
                     self.compile_stmts()
-
-                count += 1
 
                 # May need next line
                 while self.at_end():

@@ -429,7 +429,7 @@ dispatch(expression) {
 
 #### Inline Dispatch
 
-Executes code inline based on a 0-based index. The code runs in the current scope with access to all local variables and parameters. If the index is out of range, the dispatch is silently skipped.
+Executes the code of the matching case value. The code runs in the current scope with access to all local variables and parameters. If no case matches, the dispatch is silently skipped.
 
 ```c
 dispatch(expression) {
@@ -453,6 +453,20 @@ func on_event(int32 id, int32 d1, int32 d2) {
             printf("error sum=%d\\n", sum)
         }
     }
+}
+```
+
+Case values can be numbers or constants defined with `const` (before the `dispatch`) in the range 0..31. They may appear in any order and with gaps; the compiler builds the jump table, so there is no runtime cost. Gaps behave like out-of-range values (skipped). Duplicate values are a compile error.
+
+```c
+const IDLE = 0
+const RUN = 1
+const ERROR = 3
+
+dispatch(state) {
+    ERROR: printf("error\\n")
+    IDLE: printf("idle\\n")
+    RUN: printf("running\\n")
 }
 ```
 ---

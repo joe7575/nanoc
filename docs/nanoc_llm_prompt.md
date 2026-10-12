@@ -129,7 +129,8 @@ dispatch(state) {
 // Calls handler_idle() if state==0, handler_running() if state==1, etc.
 // Out-of-range values are silently skipped.
 
-// dispatch (inline, 0-based) - code runs in current scope
+// dispatch (inline) - code runs in current scope
+// case values: numbers or consts 0..31, any order, gaps skipped
 dispatch(id) {
     0: printf("idle\n")
     1: printf("run %d\n", val)

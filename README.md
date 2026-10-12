@@ -163,6 +163,9 @@ The software is licensed under the MIT license.
 
 ## History
 
+**2026-10-12 V2.3.6**
+- Inline `dispatch`: case values may be `const` names, any order, gaps allowed (range 0..31, duplicates are errors)
+
 **2026-10-12 V2.3.5**
 - Add `else if` (any number of branches, final `else` optional)
 
