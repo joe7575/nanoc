@@ -163,6 +163,9 @@ The software is licensed under the MIT license.
 
 ## History
 
+**2026-10-12 V2.3.5**
+- Add `else if` (any number of branches, final `else` optional)
+
 **2026-10-10 V2.3.4**
 - Symbol names: 15 significant characters (was 9)
 - `//#line N` directive resets the line counter for error messages

@@ -97,6 +97,15 @@ if (x > 0) {
     y = 0
 }
 
+// else if (any number, final else optional)
+if (x > 10) {
+    y = 2
+} else if (x > 0) {
+    y = 1
+} else {
+    y = 0
+}
+
 // for loop
 for i = 1 to 10 {
     printf("%d\n", i)

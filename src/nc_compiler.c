@@ -748,13 +748,18 @@ static void compile_if(void) {
         ACS16(pCi->p_code[pos]) = pCi->pc + 2;
         pos = pCi->pc;
         pCi->pc += 2;
-        match(LBRACE);
-        compile_stmts();
-        while(!BLOCKEND(lookahead())) {
-            if(!get_line()) break;
-            compile_line();
+        if(lookahead() == IF) {  // "else if": the nested if/else forms the else branch
+            match(IF);
+            compile_if();
+        } else {
+            match(LBRACE);
+            compile_stmts();
+            while(!BLOCKEND(lookahead())) {
+                if(!get_line()) break;
+                compile_line();
+            }
+            match(RBRACE);
         }
-        match(RBRACE);
         ACS16(pCi->p_code[pos]) = pCi->pc;
     }
 }

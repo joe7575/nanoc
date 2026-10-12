@@ -358,9 +358,19 @@ if (expression) {
     // statements
 }
 
+if (expression) {
+    // statements
+} else if (expression) {
+    // statements
+} else {
+    // statements
+}
+
 // Single-line form
 if (x > 0) { y = 1 } else { y = 0 }
 ```
+
+`else if` can be chained any number of times; the final `else` is optional.
 
 ### for Loop
 
