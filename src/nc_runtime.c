@@ -514,6 +514,29 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             (void)POP();  // remove loop end value
             vm->nested_loop_idx--;
             break;
+        case k_NEXT_LOCAL_N4:
+            // local_var = local_var + stack[-1]
+            // IF local_var <= stack[-2] GOTO start
+            tmp1 = ACS16(code[pc + 1]);
+            var = code[pc + 3];
+            tmp2 = TOP(); // step value
+            vm->stack[fp + var] = vm->stack[fp + var] + tmp2;
+            if(tmp2 < 0) {
+                if(vm->stack[fp + var] >= PEEK(-2)) {
+                    pc = tmp1;
+                    break;
+                }
+            } else {
+                if(vm->stack[fp + var] <= PEEK(-2)) {
+                    pc = tmp1;
+                    break;
+                }
+            }
+            pc += 4;
+            (void)POP();  // remove step value
+            (void)POP();  // remove loop end value
+            vm->nested_loop_idx--;
+            break;
         case k_IF_N3:
             if(POP() == 0) {
               pc = ACS16(code[pc + 1]);
@@ -960,6 +983,10 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             pc += 3 + slen;
             break;
         }
+#ifdef cfg_DEBUG_SUPPORT
+        case k_DBG_TRAP_N1:
+            RETURN_VM(NB_HALTED);
+#endif
         default:
             nc_print("Error: unknown opcode '%u'\n", code[pc]);
             RETURN_VM(NB_ERROR);
@@ -983,6 +1010,12 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
 void nc_destroy(void * pv_vm) {
     free(pv_vm);
 }
+
+#ifdef cfg_DEBUG_SUPPORT
+char *nc_dbg_get_string(void *pv_vm, uint16_t addr) {
+    return get_string((t_VM *)pv_vm, addr);
+}
+#endif
 
 /***************************************************************************************************
 * Static functions

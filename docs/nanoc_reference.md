@@ -65,6 +65,17 @@ NanoC supports C-style single-line comments:
 int32 x = 10  // inline comment
 ```
 
+A special directive comment `//#line N` resets the compiler's internal line
+counter to `N`, so that subsequent error messages refer to that numbering.
+This is useful when user code is embedded into a larger generated program and
+errors should point to the user's own source lines. Older firmware treats it as
+a normal comment (forward compatible).
+
+```c
+//#line 1
+// the next line is reported as line 1 on error
+```
+
 ### Multiple Statements per Line
 
 Multiple statements can be written on one line, separated by `;`:
@@ -99,12 +110,12 @@ const PI_X1000 = 3141
 **NULL** is a special constant representing a null pointer:
 
 ```c
-copy(NULL, 0, buffer, 0, 10)  // NULL as source reference
+copy(buffer, 0, NULL, 0, 10)  // NULL as source reference
 ```
 
 ### Variables
 
-Variable names must begin with a letter and may contain letters, digits, and underscores. Only the first 9 characters are significant.
+Variable names must begin with a letter and may contain letters, digits, and underscores. Only the first 15 characters are significant.
 
 String variable names end with `$`:
 
@@ -524,6 +535,13 @@ int32 dist = abs(a - b)   // absolute difference
 
 **Note:** `mid$` and `instr` use 0-based indexing (first character is position 0).
 
+**Important:** String functions (those ending with `$`) must always have their return value assigned to a `str8` variable. Calling them as standalone statements (without assignment) causes a syntax error:
+
+```c
+str8 result$ = left$(s$, 5)    // OK
+left$(s$, 5)                    // ERROR: syntax error
+```
+
 Examples:
 
 ```c
@@ -577,7 +595,7 @@ int32 d = u32(buffer, 0)   // Read dword
 
 | Function | Description |
 |----------|-------------|
-| `copy(src, soff, dst, doff, len)` | Copy len bytes from src+soff to dst+doff |
+| `copy(dst, doff, src, soff, len)` | Copy len bytes from src+soff to dst+doff (destination first!) |
 | `free()` | Print free memory info |
 
 Array names without `[]` are passed as references:
@@ -586,7 +604,7 @@ Array names without `[]` are passed as references:
 int32 src[10]
 int32 dst[10]
 
-copy(src, 0, dst, 0, 40)  // Copy 40 bytes from src to dst
+copy(dst, 0, src, 0, 40)  // Copy 40 bytes from src to dst
 ```
 
 ---
@@ -638,7 +656,7 @@ end
 
 ## Limitations
 
-- Variable names: max 9 characters
+- Variable names: max 15 characters
 - Line length: max 127 characters
 - Nested loops/calls: max 8 levels
 - Parameters per function: max 8

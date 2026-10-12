@@ -86,6 +86,14 @@ static sym_t a_Symbol[cfg_MAX_NUM_SYM] = {0};
 static uint8_t CurrVarIdx = 0;
 static uint16_t StartOfVars = 0;
 static comp_inst_t *pCi = NULL;
+#ifdef cfg_DEBUG_SUPPORT
+static nc_dbg_line_t a_DbgLines[cfg_DBG_MAX_LINES];
+static uint16_t NumDbgLines = 0;
+static nc_dbg_local_t a_DbgLocals[cfg_DBG_MAX_LOCALS];
+static uint16_t NumDbgLocals = 0;
+static void dbg_add_line(uint16_t pc, uint16_t line);
+static void dbg_drop_lines_from(uint16_t pc);
+#endif
 
 static bool get_line(void);
 static uint8_t next_token(void);
@@ -123,6 +131,7 @@ static void compile_while(void);
 static void compile_dispatch(void);
 static void compile_free(void);
 static uint16_t sym_add(char *id, uint32_t val, uint8_t type);
+static uint16_t sym_add_local(char *id, uint8_t type);
 static uint16_t sym_get(char *id);
 static void trace_print(void);
 static void error(char *err, char *id);
@@ -148,6 +157,11 @@ static type_t compile_factor(void);
 ** API functions
 *************************************************************************************************/
 void nc_init(void) {
+    // A second nc_init() (configuration replayed without restart) must start from scratch.
+    NumXFuncs = 0;
+    CurrVarIdx = 0;
+    StartOfVars = 0;
+    memset(a_Symbol, 0, sizeof(a_Symbol));
     // Add keywords - C-style types
     sym_add("int32", 0, NC_INT32);
     sym_add("str8", 0, STR8);
@@ -244,6 +258,10 @@ uint16_t nc_compile(void *pv_vm, void *fp) {
 #ifdef cfg_TRACE_SUPPORT
     pCi->p_trace = vm->trace;
 #endif
+#ifdef cfg_DEBUG_SUPPORT
+    NumDbgLines = 0;
+    NumDbgLocals = 0;
+#endif
     CurrVarIdx = 0;
     pCi->pc = 0;
     pCi->file_ptr = fp;
@@ -258,8 +276,8 @@ uint16_t nc_compile(void *pv_vm, void *fp) {
 
     if(pCi->err_count > 0) {
         vm->code_size = 0;
-        free(pCi);
         err_count = pCi->err_count;
+        free(pCi);
         pCi = NULL;
         return err_count;
     }
@@ -339,14 +357,41 @@ sym_t *nc_get_symbol_table(uint16_t *p_start_idx) {
     return a_Symbol;
 }
 
+#ifdef cfg_DEBUG_SUPPORT
+const nc_dbg_line_t *nc_dbg_get_lines(uint16_t *p_num) {
+    *p_num = NumDbgLines;
+    return a_DbgLines;
+}
+
+const nc_dbg_local_t *nc_dbg_get_locals(uint16_t *p_num) {
+    *p_num = NumDbgLocals;
+    return a_DbgLocals;
+}
+#endif
+
 /*************************************************************************************************
 ** Static functions
 *************************************************************************************************/
 static bool get_line(void) {
-    if(nc_get_code_line(pCi->file_ptr, pCi->a_line, k_MAX_LINE_LEN) != NULL) {
+    while(nc_get_code_line(pCi->file_ptr, pCi->a_line, k_MAX_LINE_LEN) != NULL) {
         if(strlen(pCi->a_line) > (k_MAX_LINE_LEN - 2)) {
             error("line too long", NULL);
         }
+
+        // Line-number directive "//#line N": reset the line counter so that
+        // error messages refer to the user's own source line numbering.
+        // Treated as a plain comment by older firmware (forward compatible).
+        {
+            char *p = pCi->a_line;
+            while(*p == ' ' || *p == '\t') { p++; }
+            if(p[0] == '/' && p[1] == '/' && p[2] == '#' &&
+               p[3] == 'l' && p[4] == 'i' && p[5] == 'n' && p[6] == 'e' &&
+               p[7] == ' ') {
+                pCi->linenum = (uint16_t)(atoi(p + 8) - 1);
+                continue; // skip the directive line, don't compile it
+            }
+        }
+
         pCi->p_pos = pCi->p_next = pCi->a_line;
         pCi->next_tok = next_token();
         while(pCi->next_tok == ':') {
@@ -614,14 +659,16 @@ static void compile_for(void) {
     uint16_t pc;
     uint8_t tok;
     uint16_t idx;
+    bool is_local;
 
     pCi->p_code[pCi->pc++] = k_FOR_N1;
     // FOR ID
     match(ID);
     idx = pCi->sym_idx;
+    is_local = a_Symbol[idx].is_local;
     match(EQ);
     compile_expression(e_NUM);
-    pCi->p_code[pCi->pc++] = k_POP_VAR_N2;
+    pCi->p_code[pCi->pc++] = is_local ? k_POP_LOCAL_N2 : k_POP_VAR_N2;
     pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
     match(TO);
     compile_expression(e_NUM);
@@ -645,7 +692,7 @@ static void compile_for(void) {
     }
     match(RBRACE);
 
-    pCi->p_code[pCi->pc++] = k_NEXT_N4;
+    pCi->p_code[pCi->pc++] = is_local ? k_NEXT_LOCAL_N4 : k_NEXT_N4;
     pCi->p_code[pCi->pc++] = pc & 0xFF;
     pCi->p_code[pCi->pc++] = (pc >> 8) & 0xFF;
     pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
@@ -922,6 +969,12 @@ static void compile_func(void) {
     pCi->p_code[pCi->pc++] = k_GOTO_N3;
     pCi->p_code[pCi->pc++] = 0;  // Will be patched
     pCi->p_code[pCi->pc++] = 0;
+#ifdef cfg_DEBUG_SUPPORT
+    // The skip GOTO is no statement; the header line is mapped to the body start below
+    if(NumDbgLines > 0 && a_DbgLines[NumDbgLines - 1].pc == skip_pos) {
+        NumDbgLines--;
+    }
+#endif
     
     // Check if first token is a return type (int32, str8) or function name (ID)
     if(tok == NC_INT32 || tok == STR8) {
@@ -961,6 +1014,7 @@ static void compile_func(void) {
             return;
         }
         uint8_t param_type = tok;
+        uint8_t vars_before = CurrVarIdx;  // the parameter name is tokenized by the next lookahead
         match(tok);
         
         // Check for [] after int32 (array reference parameter)
@@ -978,6 +1032,10 @@ static void compile_func(void) {
             return;
         }
         match(tok);  // Consume the parameter name
+        if(CurrVarIdx == vars_before && !a_Symbol[pCi->sym_idx].is_local) {
+            // Name of an existing global: the parameter gets its own entry, the global stays intact
+            pCi->sym_idx = sym_add_local(a_Symbol[pCi->sym_idx].name, a_Symbol[pCi->sym_idx].type);
+        }
         // Mark as local variable with stack offset
         a_Symbol[pCi->sym_idx].is_local = 1;
         a_Symbol[pCi->sym_idx].value = pCi->local_var_count;
@@ -1011,6 +1069,9 @@ static void compile_func(void) {
         pCi->p_code[pCi->pc++] = k_POP_LOCAL_N2;
         pCi->p_code[pCi->pc++] = a_Symbol[param_indices[i]].value;
     }
+#ifdef cfg_DEBUG_SUPPORT
+    dbg_add_line(pCi->pc, pCi->linenum);
+#endif
     
     // Expect opening brace
     match(LBRACE);
@@ -1040,8 +1101,18 @@ static void compile_func(void) {
     pCi->p_code[skip_pos + 2] = (pCi->pc >> 8) & 0xFF;
     
     // Clear local variables from symbol table (they're out of scope)
-    for(uint16_t i = pCi->local_var_start_idx; i < cfg_MAX_NUM_SYM; i++) {
+    for(uint16_t i = StartOfVars; i < cfg_MAX_NUM_SYM; i++) {
         if(a_Symbol[i].is_local) {
+#ifdef cfg_DEBUG_SUPPORT
+            if(NumDbgLocals < cfg_DBG_MAX_LOCALS) {
+                nc_dbg_local_t *p_loc = &a_DbgLocals[NumDbgLocals++];
+                memcpy(p_loc->name, a_Symbol[i].name, k_MAX_SYM_LEN);
+                p_loc->start_pc = a_Symbol[func_idx].value;
+                p_loc->end_pc = pCi->pc;
+                p_loc->offs = (uint8_t)a_Symbol[i].value;
+                p_loc->type = a_Symbol[i].type;
+            }
+#endif
             a_Symbol[i].name[0] = '\0';
             a_Symbol[i].is_local = 0;
             CurrVarIdx--;
@@ -1419,6 +1490,9 @@ static void compile_dispatch(void) {
 
         // Emit jump table after all case bodies
         uint16_t table_addr = pCi->pc;
+#ifdef cfg_DEBUG_SUPPORT
+        dbg_drop_lines_from(table_addr);
+#endif
         for(uint8_t i = 0; i < count; i++) {
             pCi->p_code[pCi->pc++] = case_addrs[i] & 0xFF;
             pCi->p_code[pCi->pc++] = (case_addrs[i] >> 8) & 0xFF;
@@ -1480,6 +1554,9 @@ static void compile_dispatch(void) {
 
         // Patch count
         pCi->p_code[count_pos] = count;
+#ifdef cfg_DEBUG_SUPPORT
+        dbg_drop_lines_from(count_pos);
+#endif
     }
 }
 
@@ -1495,6 +1572,7 @@ static void compile_dispatch(void) {
 */
 static uint16_t sym_add(char *id, uint32_t val, uint8_t type) {
     uint16_t start = 0;
+    uint16_t first_free = 0xFFFF;
     char sym[k_MAX_SYM_LEN];
 
     // Copy symbol name (case-sensitive)
@@ -1506,21 +1584,35 @@ static uint16_t sym_add(char *id, uint32_t val, uint8_t type) {
     }
     sym[k_MAX_SYM_LEN - 1] = '\0';
 
-    // Search for existing symbol
+    // Search for existing symbol (search ALL entries, don't stop at holes).
+    // Inside a function a local symbol takes precedence over a global one with the same name.
+    uint16_t found = 0xFFFF;
     for(uint16_t i = 0; i < cfg_MAX_NUM_SYM; i++) {
-        if(strcmp(a_Symbol[i].name, sym) == 0) {
-            if(a_Symbol[i].value == 0 && a_Symbol[i].type == LABEL && val > 0) {
-                a_Symbol[i].value = val;
-            }
-            return i;
-        }
         if(a_Symbol[i].name[0] == '\0') {
-            start = i;
-            break;
+            if(first_free == 0xFFFF) {
+                first_free = i;
+            }
+            continue;  // Skip holes, keep searching
+        }
+        if(strcmp(a_Symbol[i].name, sym) == 0) {
+            if(a_Symbol[i].is_local || pCi == NULL || !pCi->in_func) {
+                found = i;
+                break;
+            }
+            if(found == 0xFFFF) {
+                found = i;
+            }
         }
     }
+    if(found != 0xFFFF) {
+        if(a_Symbol[found].value == 0 && a_Symbol[found].type == LABEL && val > 0) {
+            a_Symbol[found].value = val;
+        }
+        return found;
+    }
 
-    // Add new symbol
+    // Not found - add new symbol at first free slot
+    start = (first_free != 0xFFFF) ? first_free : 0;
     for(uint16_t i = start; i < cfg_MAX_NUM_SYM; i++) {
         if(a_Symbol[i].name[0] == '\0') {
             strncpy(a_Symbol[i].name, sym, k_MAX_SYM_LEN - 1);
@@ -1532,6 +1624,26 @@ static uint16_t sym_add(char *id, uint32_t val, uint8_t type) {
             if(type != LABEL) {
                 CurrVarIdx++;
             }
+            return i;
+        }
+    }
+    error("symbol table full", NULL);
+    return 0;
+}
+
+/*
+** Add a local symbol even if a global symbol with the same name exists (parameter shadowing)
+*/
+static uint16_t sym_add_local(char *id, uint8_t type) {
+    for(uint16_t i = StartOfVars; i < cfg_MAX_NUM_SYM; i++) {
+        if(a_Symbol[i].name[0] == '\0') {
+            memmove(a_Symbol[i].name, id, k_MAX_SYM_LEN);
+            a_Symbol[i].name[k_MAX_SYM_LEN - 1] = '\0';
+            a_Symbol[i].value = 0;
+            a_Symbol[i].type = type;
+            a_Symbol[i].is_local = 1;
+            a_Symbol[i].param_count = 0xFF;
+            CurrVarIdx++;
             return i;
         }
     }
@@ -1568,7 +1680,30 @@ static void trace_print(void) {
 #ifdef cfg_TRACE_SUPPORT
     pCi->p_trace[pCi->pc] = pCi->linenum;
 #endif
+#ifdef cfg_DEBUG_SUPPORT
+    dbg_add_line(pCi->pc, pCi->linenum);
+#endif
 }
+
+#ifdef cfg_DEBUG_SUPPORT
+// Lines without code share the pc with the following line; the last one wins.
+static void dbg_add_line(uint16_t pc, uint16_t line) {
+    if(NumDbgLines > 0 && a_DbgLines[NumDbgLines - 1].pc == pc) {
+        a_DbgLines[NumDbgLines - 1].line = line;
+    } else if(NumDbgLines < cfg_DBG_MAX_LINES) {
+        a_DbgLines[NumDbgLines].pc = pc;
+        a_DbgLines[NumDbgLines].line = line;
+        NumDbgLines++;
+    }
+}
+
+// Lines read while emitting inline data (jump tables) must not become breakpoint positions
+static void dbg_drop_lines_from(uint16_t pc) {
+    while(NumDbgLines > 0 && a_DbgLines[NumDbgLines - 1].pc >= pc) {
+        NumDbgLines--;
+    }
+}
+#endif
 
 static void error(char *err, char *id) {
     nc_print("Error in line %u: ", pCi->linenum);

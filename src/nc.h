@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include <stdbool.h>
 #include "nc_cfg.h"
 
-#define SVERSION "2.3.3"
+#define SVERSION "2.3.4"
 
 /*
 ** Data types for 'nc_define_external_function()'
@@ -46,6 +46,8 @@ enum {
   NB_RETI,     // return from interrupt
   NB_XFUNC,    // 'call' external function
 };
+
+#define NB_HALTED   (0x100)  // debugger breakpoint reached (outside the XFUNC range)
 
 /*
 ** To be implemented by the user

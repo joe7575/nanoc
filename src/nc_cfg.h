@@ -19,10 +19,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 
 */
 
+#ifndef NC_CFG_H
+#define NC_CFG_H
+
 //#define cfg_LINE_NUMBERS      // enable line numbers (or use labels)
 #define cfg_STRING_SUPPORT     // enable string support
 #define cfg_DATA_ACCESS        // enable byte access to arrays
 #define cfg_TRACE_SUPPORT      // enable trace support
+//#define cfg_DEBUG_SUPPORT     // source level debugger: line/locals tables, k_DBG_TRAP_N1 (NB_HALTED)
 
 #define cfg_MAX_FOR_LOOPS       (4)   // nested FOR loops (2 values per FOR loop on the stack)
 #define cfg_STACK_SIZE          (32)  // value for stack size (expression, call stack)
@@ -40,4 +44,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #else
     #define cfg_MAX_NUM_SYM     (256) // For keywords, variables, and labels
 #endif
+
+#define cfg_DBG_MAX_LINES       (512) // debugger: max. source lines with code (4 bytes each)
+#define cfg_DBG_MAX_LOCALS      (48)  // debugger: max. local variable names (20 bytes each)
+
+#endif /* NC_CFG_H */
 

@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 
 #define k_MEM_BLOCK_SIZE    (8)     // Must be a multiple of 4 (real size is MIN_BLOCK_SIZE - 1)
 #define k_MEM_FREE_TAG      (0)     // Also used for number of blocks
-#define k_MAX_SYM_LEN       (10)    // Max. length of a symbol name incl. '\0'
+#define k_MAX_SYM_LEN       (16)    // Max. length of a symbol name incl. '\0'
 #define k_MAX_LINE_LEN      (128)   // Max. length of a line/string
 #define k_DATA_STR_TAG      (0x80000000) // To distinguish between strings and numbers in the data section
 
@@ -121,6 +121,8 @@ enum {
     k_SET_ARR_4BYTE_S_N1,  // stack-based: pop val, pop idx, pop addr, set u32
     k_DISPATCH_Nx,           // dispatch(expr) { func1 func2 ... }
     k_DISPATCH_JMP_Nx,       // dispatch(expr) { 0: code 1: code ... }
+    k_NEXT_LOCAL_N4,         // (16 bit programm address), (local variable) - for-loop with local var
+    k_DBG_TRAP_N1,           // debugger breakpoint, patched over the original opcode
 };
 
 // Token types
@@ -207,3 +209,24 @@ void nc_mem_free(t_VM *p_vm, uint16_t addr);
 uint16_t nc_mem_realloc(t_VM *p_vm, uint16_t addr, uint16_t bytes);
 uint16_t nc_mem_get_blocksize(t_VM *p_vm, uint16_t addr);
 uint16_t nc_mem_get_free(t_VM *p_vm);
+
+#ifdef cfg_DEBUG_SUPPORT
+// Line table entry, sorted by pc (one entry per source line that generates code)
+typedef struct {
+    uint16_t pc;
+    uint16_t line;
+} nc_dbg_line_t;
+
+// Local variable/parameter of a function, valid for start_pc <= pc < end_pc
+typedef struct {
+    char     name[k_MAX_SYM_LEN];
+    uint16_t start_pc;
+    uint16_t end_pc;
+    uint8_t  offs;      // stack offset relative to fp
+    uint8_t  type;      // ID, STRID or ARR
+} nc_dbg_local_t;
+
+const nc_dbg_line_t *nc_dbg_get_lines(uint16_t *p_num);
+const nc_dbg_local_t *nc_dbg_get_locals(uint16_t *p_num);
+char *nc_dbg_get_string(void *pv_vm, uint16_t addr);
+#endif

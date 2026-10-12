@@ -48,7 +48,7 @@ Array names without `[]` are passed as references (like C pointers):
 ```c
 int32 src[10]
 int32 dst[10]
-copy(src, 0, dst, 0, 40)  // Copy 40 bytes
+copy(dst, 0, src, 0, 40)  // Copy 40 bytes
 ```
 
 ### Functions
@@ -174,7 +174,7 @@ u32(arr, offset, value)    // write 32-bit
 ### Other
 ```c
 rnd(n)                     // random 0 to n-1
-copy(src, soff, dst, doff, len)  // copy bytes (arrays as refs)
+copy(dst, doff, src, soff, len)  // copy bytes (destination first!)
 end                        // terminate program
 reti                       // return from interrupt handler
 NULL                       // null pointer constant

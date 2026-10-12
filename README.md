@@ -54,7 +54,7 @@ Byte/Word access functions (optional):
     u16(arr, idx, val)   // Write 16-bit word at byte offset idx
     u32(arr, idx)        // Read 32-bit dword at byte offset idx
     u32(arr, idx, val)   // Write 32-bit dword at byte offset idx
-    copy(src, soff, dst, doff, len)  // Copy len bytes
+    copy(dst, doff, src, soff, len)  // Copy len bytes (destination first)
 ```
 
 Supported data types are:
@@ -162,6 +162,17 @@ Copyright (C) 2024-2026 Joachim Stolberg
 The software is licensed under the MIT license.
 
 ## History
+
+**2026-10-10 V2.3.4**
+- Symbol names: 15 significant characters (was 9)
+- `//#line N` directive resets the line counter for error messages
+- `for` loops with a local loop variable (`k_NEXT_LOCAL_N4`)
+- Optional source level debugger support (`cfg_DEBUG_SUPPORT`): line/locals tables, breakpoint trap returning `NB_HALTED`
+- Fix: function parameters named like a global variable corrupted the symbol table
+- Fix: stack pointer not read back after `realloc_string`, missing `break` in `k_FREE_N1`
+- Fix: `nc_init()` resets the compiler state (second `nc_init()` without restart)
+- Fix: error count read after `free()` in `nc_compile()`
+- Docs: `copy()` takes the destination first
 
 **2026-02-27 V2.3.3**
 - Add `abs(n)` built-in function for int32 absolute value
