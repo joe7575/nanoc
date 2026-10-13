@@ -47,6 +47,7 @@ LOCAL = 211; FUNC = 212; RET = 213
 DISPATCH = 214
 SHL = 215; SHR = 216
 ABS = 217
+BREAKPOINT = 218
 e_CNST = 250  # Internal: compile-time constant
 
 # Special single-char tokens returned as ord(char)
@@ -60,7 +61,7 @@ KEYWORDS = {
     "for": FOR, "to": TO, "step": STEP,
     "if": IF, "else": ELSE, "end": END,
     "while": WHILE, "and": AND, "or": OR, "not": NOT, "mod": MOD,
-    "break": BREAK, "reti": RETI,
+    "break": BREAK, "breakpoint": BREAKPOINT, "reti": RETI,
     "copy": COPY, "u8": U8, "u16": U16, "u32": U32,
     "left$": LEFTS, "right$": RIGHTS, "mid$": MIDS,
     "len": LEN, "str$": STRS, "hex$": HEXS,
@@ -265,6 +266,7 @@ class NcChecker:
         self.func_name = ""
         self.func_return_type = 0
         self.local_vars = set()
+        self.loop_depth = 0
         self.brace_depth = 0
 
         # Register external functions
@@ -432,7 +434,11 @@ class NcChecker:
         elif t == XFUNC:
             self.compile_xfunc_stmt(tok)
         elif t == BREAK:
-            pass
+            if self.loop_depth == 0:
+                self.error("break outside loop")
+        elif t == BREAKPOINT:
+            self.match('(')
+            self.match(')')
         elif t == RETI:
             pass
         elif t == COPY:
@@ -482,15 +488,18 @@ class NcChecker:
         if self.peek_type() == STEP:
             self.next()
             self.compile_expression()
-        self.match(LBRACE)
-        self.compile_block()
-        self.match(RBRACE)
+        self.compile_loop_body()
 
     def compile_while(self):
         self.compile_expression()
+        self.compile_loop_body()
+
+    def compile_loop_body(self):
+        self.loop_depth += 1
         self.match(LBRACE)
         self.compile_block()
         self.match(RBRACE)
+        self.loop_depth -= 1
 
     def compile_if(self):
         self.compile_expression()
@@ -577,8 +586,11 @@ class NcChecker:
         self.symbols[func_name]["param_count"] = param_count
 
         self.match(LBRACE)
+        old_loop_depth = self.loop_depth
+        self.loop_depth = 0
         self.compile_block()
         self.match(RBRACE)
+        self.loop_depth = old_loop_depth
 
         # Clean up local vars
         for lv in self.local_vars:

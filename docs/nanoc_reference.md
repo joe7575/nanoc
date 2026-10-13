@@ -27,6 +27,7 @@
     - [if...else](#ifelse)
     - [for Loop](#for-loop)
     - [while Loop](#while-loop)
+    - [break](#break)
     - [dispatch (Indexed Dispatch)](#dispatch-indexed-dispatch)
       - [Function Dispatch](#function-dispatch)
       - [Inline Dispatch](#inline-dispatch)
@@ -35,6 +36,7 @@
     - [end](#end)
     - [printf](#printf)
     - [reti](#reti)
+    - [breakpoint](#breakpoint)
   - [Built-in Functions](#built-in-functions)
     - [Numeric Functions](#numeric-functions)
     - [String Functions](#string-functions)
@@ -413,6 +415,19 @@ while (i < 10) {
     i++
 }
 ```
+
+### break
+
+Leaves the innermost `for` or `while` loop, like in C. Outside a loop `break` is a compile error.
+
+```c
+for i = 0 to 99 {
+    if (buffer[i] == 0) {
+        break
+    }
+}
+```
+
 ### dispatch (Indexed Dispatch)
 
 #### Function Dispatch
@@ -525,6 +540,16 @@ Return from interrupt handler. Signals the host system that interrupt processing
 func on_can(int32 id, int32 data) {
     printf("CAN: id=%d, data=%d\n", id, data)
     reti
+}
+```
+
+### breakpoint
+
+Breakpoint in the source code: the VM returns `NB_BREAK` to the host with the line number on the parameter stack. What happens next is up to the host (e.g. halt in the debugger or ignore it).
+
+```c
+if (error_count > 3) {
+    breakpoint()
 }
 ```
 

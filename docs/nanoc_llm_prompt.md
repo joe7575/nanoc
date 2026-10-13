@@ -120,6 +120,13 @@ while (x > 0) {
     x--
 }
 
+// break leaves the innermost for/while loop (compile error outside a loop)
+while (1) {
+    if (done) {
+        break
+    }
+}
+
 // dispatch (indexed function dispatch, 0-based)
 dispatch(state) {
     handler_idle,
@@ -187,6 +194,7 @@ rnd(n)                     // random 0 to n-1
 copy(dst, doff, src, soff, len)  // copy bytes (destination first!)
 end                        // terminate program
 reti                       // return from interrupt handler
+breakpoint()               // breakpoint in the source code (debugger)
 NULL                       // null pointer constant
 ```
 
@@ -232,7 +240,7 @@ func example(int32 param) {    // param is LOCAL
 
 ## LIMITATIONS
 
-- Variable names: max 9 chars
+- Variable names: max 15 chars
 - Line length: max 127 chars
 - Nested calls: max 8 levels
 - Parameters: max 8 per function

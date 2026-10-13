@@ -55,6 +55,8 @@ typedef struct {
     uint16_t pos;
 } fwdecl_t;
 
+#define k_MAX_BREAKS    (16)    // 'break' statements in all currently open loops
+
 typedef struct {
     void    *file_ptr;
     fwdecl_t a_forward_decl[cfg_MAX_FW_DECL];
@@ -77,6 +79,10 @@ typedef struct {
     uint8_t  local_var_count;        // Number of local variables in current function
     uint16_t local_var_start_idx;    // Symbol table index where local vars start
     uint8_t  func_return_type;       // Return type of current function (0=void, NC_INT32, STR8)
+    uint8_t  loop_type;              // Innermost loop: 0 (none), FOR or WHILE
+    uint8_t  for_depth;              // Open for-loops in the current function
+    uint8_t  num_breaks;             // Pending 'break' jumps, patched at the end of their loop
+    uint16_t a_break_pos[k_MAX_BREAKS];
     jmp_buf  jmp_buf;
 } comp_inst_t;
 
@@ -118,7 +124,9 @@ static void compile_printf(void);
 static void compile_end(void);
 static type_t compile_xfunc(uint8_t type);
 static void compile_break(void);
+static void compile_breakpoint(void);
 static void compile_reti(void);
+static void compile_for_leave(void);
 #ifdef cfg_DATA_ACCESS
 static void compile_copy(void);
 static void compile_get(uint8_t tok, uint8_t instr, uint8_t instr_s);
@@ -128,6 +136,7 @@ static void compile_u32_stmt(void);
 #endif
 static void compile_const(void);
 static void compile_while(void);
+static void patch_breaks(uint8_t first_break);
 static void compile_dispatch(void);
 static void compile_free(void);
 static uint16_t sym_add(char *id, uint32_t val, uint8_t type);
@@ -179,6 +188,7 @@ void nc_init(void) {
     sym_add("not", 0, NOT);
     sym_add("mod", 0, MOD);
     sym_add("break", 0, BREAK);
+    sym_add("breakpoint", 0, BREAKPOINT);
     sym_add("reti", 0, RETI);
 #ifdef cfg_DATA_ACCESS
     sym_add("copy", 0, COPY);
@@ -635,6 +645,7 @@ static void compile_stmt(void) {
     case END: compile_end(); break;
     case XFUNC: compile_xfunc(e_NONE); break;
     case BREAK: compile_break(); break;
+    case BREAKPOINT: compile_breakpoint(); break;
     case RETI: compile_reti(); break;
 #ifdef cfg_DATA_ACCESS    
     case COPY: compile_copy(); break;
@@ -663,8 +674,15 @@ static void compile_for(void) {
 
     pCi->p_code[pCi->pc++] = k_FOR_N1;
     // FOR ID
+    uint8_t num_vars = CurrVarIdx;
     match(ID);
     idx = pCi->sym_idx;
+    // A loop variable first seen inside a function is local; as a global it would share
+    // its index with the next global variable after the function's locals are released
+    if(pCi->in_func && !a_Symbol[idx].is_local && CurrVarIdx != num_vars) {
+        a_Symbol[idx].is_local = 1;
+        a_Symbol[idx].value = pCi->local_var_count++;
+    }
     is_local = a_Symbol[idx].is_local;
     match(EQ);
     compile_expression(e_NUM);
@@ -684,6 +702,10 @@ static void compile_for(void) {
     pc = pCi->pc;
     
     // C-style: for i = 1 to 10 { ... }
+    uint8_t outer_loop = pCi->loop_type;
+    uint8_t first_break = pCi->num_breaks;
+    pCi->loop_type = FOR;
+    pCi->for_depth++;
     match(LBRACE);
     compile_stmts();
     while(!BLOCKEND(lookahead())) {
@@ -691,11 +713,14 @@ static void compile_for(void) {
         compile_line();
     }
     match(RBRACE);
+    pCi->loop_type = outer_loop;
+    pCi->for_depth--;
 
     pCi->p_code[pCi->pc++] = is_local ? k_NEXT_LOCAL_N4 : k_NEXT_N4;
     pCi->p_code[pCi->pc++] = pc & 0xFF;
     pCi->p_code[pCi->pc++] = (pc >> 8) & 0xFF;
     pCi->p_code[pCi->pc++] = a_Symbol[idx].value;
+    patch_breaks(first_break);
 }
 
 /*
@@ -709,6 +734,9 @@ static void compile_while(void) {
     pCi->p_code[pCi->pc++] = k_IF_N3;
     pos2 = pCi->pc; // end of loop
     pCi->pc += 2;
+    uint8_t outer_loop = pCi->loop_type;
+    uint8_t first_break = pCi->num_breaks;
+    pCi->loop_type = WHILE;
     match(LBRACE);
     compile_stmts();
     while(!BLOCKEND(lookahead())) {
@@ -716,10 +744,22 @@ static void compile_while(void) {
         compile_line();
     }
     match(RBRACE);
+    pCi->loop_type = outer_loop;
     pCi->p_code[pCi->pc++] = k_GOTO_N3;
     pCi->p_code[pCi->pc++] = pos1 & 0xFF;
     pCi->p_code[pCi->pc++] = (pos1 >> 8) & 0xFF;
     ACS16(pCi->p_code[pos2]) = pCi->pc;
+    patch_breaks(first_break);
+}
+
+/*
+** Let the 'break' jumps of the loop just compiled point to the current position
+*/
+static void patch_breaks(uint8_t first_break) {
+    for(uint8_t i = first_break; i < pCi->num_breaks; i++) {
+        ACS16(pCi->p_code[pCi->a_break_pos[i]]) = pCi->pc;
+    }
+    pCi->num_breaks = first_break;
 }
 
 /*
@@ -1081,13 +1121,19 @@ static void compile_func(void) {
     // Expect opening brace
     match(LBRACE);
     
-    // Compile function body
+    // Compile function body ('break' must not leave the function)
+    uint8_t outer_loop = pCi->loop_type;
+    uint8_t outer_for_depth = pCi->for_depth;
+    pCi->loop_type = 0;
+    pCi->for_depth = 0;
     compile_stmts();
     while(!BLOCKEND(lookahead())) {
         if(!get_line()) break;
         compile_line();
     }
     match(RBRACE);
+    pCi->loop_type = outer_loop;
+    pCi->for_depth = outer_for_depth;
     
     // Patch ENTER instruction with final local variable count
     pCi->p_code[enter_pos + 1] = pCi->local_var_count;
@@ -1162,7 +1208,18 @@ static void compile_return(void) {
         }
     }
     // Generate LEAVE (restores frame, saves return value if present)
+    compile_for_leave();
     pCi->p_code[pCi->pc++] = k_LEAVE_N1;
+}
+
+/*
+** Unwind the for-loops still open when leaving a function via return/reti
+*/
+static void compile_for_leave(void) {
+    if(pCi->for_depth > 0) {
+        pCi->p_code[pCi->pc++] = k_FOR_LEAVE_N2;
+        pCi->p_code[pCi->pc++] = pCi->for_depth;
+    }
 }
 
 /*
@@ -1260,13 +1317,37 @@ static type_t compile_xfunc(uint8_t type) {
     return a_XFuncs[idx].return_type;
 }
 
+/*
+** break: leave the innermost for/while loop
+*/
 static void compile_break(void) {
+    if(pCi->loop_type == 0) {
+        error("break outside loop", NULL);
+        return;
+    }
+    if(pCi->num_breaks >= k_MAX_BREAKS) {
+        error("too many break statements", NULL);
+        return;
+    }
+    // A for-loop keeps end value and step on the stack, k_BREAK_FOR_N3 removes them
+    pCi->p_code[pCi->pc++] = (pCi->loop_type == FOR) ? k_BREAK_FOR_N3 : k_GOTO_N3;
+    pCi->a_break_pos[pCi->num_breaks++] = pCi->pc;
+    pCi->pc += 2;
+}
+
+/*
+** breakpoint(): returns NB_BREAK with the line number on the parameter stack
+*/
+static void compile_breakpoint(void) {
+    match('(');
+    match(')');
     pCi->p_code[pCi->pc++] = k_BREAK_INSTR_N3;
     ACS16(pCi->p_code[pCi->pc]) = pCi->linenum;
     pCi->pc += 2;
 }
 
 static void compile_reti(void) {
+    compile_for_leave();
     pCi->p_code[pCi->pc++] = k_RETI_N1;
 }
 

@@ -29,6 +29,9 @@ NanoC is derived from [NanoBasic](https://github.com/joe7575/nanobasic). While m
 
     for i = 1 to 10 step 2 {
         statements...
+        if (condition) {
+            break    // leave the innermost for/while loop
+        }
     }
 
     // Output
@@ -179,6 +182,11 @@ Copyright (C) 2024-2026 Joachim Stolberg
 The software is licensed under the MIT license.
 
 ## History
+
+**2026-10-12 V2.3.7**
+- `break` leaves the innermost `for`/`while` loop (C-style); the former `break` statement (source breakpoint, returns `NB_BREAK`) is now `breakpoint()`
+- Fix: `return`/`reti` inside a `for` loop did not release the loop counter ("too many nested 'for' loops" after a few calls)
+- Fix: an undeclared `for` variable inside a function was global and shared its index with the next global variable
 
 **2026-10-12 V2.3.6**
 - Inline `dispatch`: case values may be `const` names, any order, gaps allowed (range 0..31, duplicates are errors)

@@ -359,6 +359,17 @@ uint16_t nc_run(void *pv_vm, uint16_t *p_cycles) {
             PPUSH(tmp1);
             pc += 3; 
             RETURN_VM(NB_BREAK);
+        case k_BREAK_FOR_N3:
+            (void)POP();  // remove step value
+            (void)POP();  // remove loop end value
+            vm->nested_loop_idx--;
+            pc = ACS16(code[pc + 1]);
+            break;
+        case k_FOR_LEAVE_N2:
+            // The loop values on the stack are discarded with the stack frame
+            vm->nested_loop_idx -= code[pc + 1];
+            pc += 2;
+            break;
         case k_ADD_N1:
             tmp2 = POP();
             TOP() = TOP() + tmp2;

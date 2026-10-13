@@ -123,6 +123,8 @@ enum {
     k_DISPATCH_JMP_Nx,       // dispatch(expr) { 0: code 1: code ... }
     k_NEXT_LOCAL_N4,         // (16 bit programm address), (local variable) - for-loop with local var
     k_DBG_TRAP_N1,           // debugger breakpoint, patched over the original opcode
+    k_BREAK_FOR_N3,          // (16 bit programm address) - 'break' out of a for-loop
+    k_FOR_LEAVE_N2,          // (number of for-loops) - 'return' from inside for-loops
 };
 
 // Token types
@@ -158,6 +160,7 @@ enum {
     DISPATCH,                    // 214 (indexed dispatch)
     SHL, SHR,                    // 215 - 216 (bit shift operators)
     ABS,                         // 217 (absolute value)
+    BREAKPOINT,                  // 218 (breakpoint() statement)
 };
 
 // Symbol table

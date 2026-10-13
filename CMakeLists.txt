@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(nanoc VERSION 2.3.6 LANGUAGES C)
+project(nanoc VERSION 2.3.7 LANGUAGES C)
 
 include_directories(./src)
 add_compile_options(-Wall)
