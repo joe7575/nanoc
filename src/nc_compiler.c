@@ -129,6 +129,9 @@ static void compile_reti(void);
 static void compile_for_leave(void);
 #ifdef cfg_DATA_ACCESS
 static void compile_copy(void);
+#ifdef cfg_STRING_SUPPORT
+static void compile_str2arr(void);
+#endif
 static void compile_get(uint8_t tok, uint8_t instr, uint8_t instr_s);
 static void compile_u8_stmt(void);
 static void compile_u16_stmt(void);
@@ -207,6 +210,10 @@ void nc_init(void) {
     sym_add("hex$", 0, HEXS);
     sym_add("NULL", 0, NIL);
     sym_add("string$", 0, STRINGS);
+#ifdef cfg_DATA_ACCESS
+    sym_add("str2arr", 0, STR2ARR);
+    sym_add("arr2str$", 0, ARR2STRS);
+#endif
 #endif
     sym_add("const", 0, NC_CONST);
     sym_add("instr", 0, INSTR);
@@ -652,6 +659,9 @@ static void compile_stmt(void) {
     case U8: compile_u8_stmt(); break;
     case U16: compile_u16_stmt(); break;
     case U32: compile_u32_stmt(); break;
+#ifdef cfg_STRING_SUPPORT
+    case STR2ARR: compile_str2arr(); break;
+#endif
 #endif
     case FREE: compile_free(); break;
     case DISPATCH: compile_dispatch(); break;
@@ -1368,6 +1378,20 @@ static void compile_copy(void) {
     match(')');
     pCi->p_code[pCi->pc++] = k_COPY_N1;
 }
+
+// str2arr(arr, offs, str)
+#ifdef cfg_STRING_SUPPORT
+static void compile_str2arr(void) {
+    match('(');
+    compile_expression(e_REF);
+    match(',');
+    compile_expression(e_NUM);
+    match(',');
+    compile_expression(e_STR);
+    match(')');
+    pCi->p_code[pCi->pc++] = k_STR2ARR_N1;
+}
+#endif
 
 static void compile_get(uint8_t tok, uint8_t instr, uint8_t instr_s) {
     uint8_t idx;
@@ -2334,6 +2358,18 @@ static type_t compile_factor(void) {
         pCi->p_code[pCi->pc++] = k_ALLOC_STR_N1;
         type = e_STR;
         break;
+#ifdef cfg_DATA_ACCESS
+    case ARR2STRS: // arr2str$(arr, offs)
+        match(ARR2STRS);
+        match('(');
+        compile_expression(e_REF);
+        match(',');
+        compile_expression(e_NUM);
+        match(')');
+        pCi->p_code[pCi->pc++] = k_ARR2STR_N1;
+        type = e_STR;
+        break;
+#endif
 #endif        
     case RND: // Random number
         match(RND);

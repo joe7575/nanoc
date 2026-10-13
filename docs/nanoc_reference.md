@@ -640,6 +640,19 @@ u32(buffer, 4, 0x12345678) // Write dword at byte offset 4
 int32 d = u32(buffer, 0)   // Read dword
 ```
 
+Strings and arrays:
+
+| Function | Description |
+|----------|-------------|
+| `str2arr(arr, idx, s$)` | Write string `s$` incl. terminating 0 at byte offset idx (`len(s$) + 1` bytes) |
+| `arr2str$(arr, idx)` | Read a 0-terminated string from byte offset idx (ends at the array end if there is no 0) |
+
+```c
+int32 rsp[8]
+str2arr(rsp, 3, "CANbridge")     // bytes 3..12: "CANbridge" + 0
+printf("%s\n", arr2str$(rsp, 3)) // CANbridge
+```
+
 ### Memory Functions
 
 | Function | Description |

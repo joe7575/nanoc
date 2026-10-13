@@ -186,6 +186,8 @@ u16(arr, offset)           // read 16-bit
 u16(arr, offset, value)    // write 16-bit
 u32(arr, offset)           // read 32-bit
 u32(arr, offset, value)    // write 32-bit
+str2arr(arr, offset, s$)   // write string incl. terminating 0
+arr2str$(arr, offset)      // read 0-terminated string
 ```
 
 ### Other

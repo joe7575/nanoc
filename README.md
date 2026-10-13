@@ -60,6 +60,8 @@ Byte/Word access functions (optional):
     u32(arr, idx)        // Read 32-bit dword at byte offset idx
     u32(arr, idx, val)   // Write 32-bit dword at byte offset idx
     copy(dst, doff, src, soff, len)  // Copy len bytes (destination first)
+    str2arr(arr, idx, s$)            // Write string incl. terminating 0 at byte offset idx
+    arr2str$(arr, idx)               // Read 0-terminated string from byte offset idx
 ```
 
 Supported data types are:
@@ -182,6 +184,9 @@ Copyright (C) 2024-2026 Joachim Stolberg
 The software is licensed under the MIT license.
 
 ## History
+
+**2026-10-13 V2.3.8**
+- Add `str2arr(arr, idx, s$)` and `arr2str$(arr, idx)` to copy strings into byte arrays and back
 
 **2026-10-12 V2.3.7**
 - `break` leaves the innermost `for`/`while` loop (C-style); the former `break` statement (source breakpoint, returns `NB_BREAK`) is now `breakpoint()`

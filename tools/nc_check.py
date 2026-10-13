@@ -48,6 +48,7 @@ DISPATCH = 214
 SHL = 215; SHR = 216
 ABS = 217
 BREAKPOINT = 218
+STR2ARR = 219; ARR2STRS = 220
 e_CNST = 250  # Internal: compile-time constant
 
 # Special single-char tokens returned as ord(char)
@@ -63,6 +64,7 @@ KEYWORDS = {
     "while": WHILE, "and": AND, "or": OR, "not": NOT, "mod": MOD,
     "break": BREAK, "breakpoint": BREAKPOINT, "reti": RETI,
     "copy": COPY, "u8": U8, "u16": U16, "u32": U32,
+    "str2arr": STR2ARR, "arr2str$": ARR2STRS,
     "left$": LEFTS, "right$": RIGHTS, "mid$": MIDS,
     "len": LEN, "str$": STRS, "hex$": HEXS,
     "NULL": NIL, "string$": STRINGS,
@@ -443,6 +445,14 @@ class NcChecker:
             pass
         elif t == COPY:
             self.compile_copy()
+        elif t == STR2ARR:
+            self.match('(')
+            self.compile_expression()  # arr ref
+            self.match(',')
+            self.compile_expression()  # offset
+            self.match(',')
+            self.compile_expression()  # string
+            self.match(')')
         elif t == U8:
             self.compile_u_stmt(tok, "u8")
         elif t == U16:
@@ -1112,6 +1122,13 @@ class NcChecker:
             self.compile_expression()
             self.match(')')
         elif t == LEFTS:
+            self.next()
+            self.match('(')
+            self.compile_expression()
+            self.match(',')
+            self.compile_expression()
+            self.match(')')
+        elif t == ARR2STRS:
             self.next()
             self.match('(')
             self.compile_expression()
