@@ -210,9 +210,17 @@ void nc_init(void) {
     sym_add("hex$", 0, HEXS);
     sym_add("NULL", 0, NIL);
     sym_add("string$", 0, STRINGS);
+    // Same functions without the BASIC '$' suffix
+    sym_add("left", 0, LEFTS);
+    sym_add("right", 0, RIGHTS);
+    sym_add("mid", 0, MIDS);
+    sym_add("str", 0, STRS);
+    sym_add("hex", 0, HEXS);
+    sym_add("string", 0, STRINGS);
 #ifdef cfg_DATA_ACCESS
     sym_add("str2arr", 0, STR2ARR);
     sym_add("arr2str$", 0, ARR2STRS);
+    sym_add("arr2str", 0, ARR2STRS);
 #endif
 #endif
     sym_add("const", 0, NC_CONST);
@@ -889,6 +897,10 @@ static void compile_var(uint8_t tok) {
     }
 
     if(tok == STRID) { // str8 a = "string"
+        if(is_local) {
+            error("string parameters are read-only", a_Symbol[idx].name);
+            return;
+        }
         match(EQ);
         compile_expression(e_STR);
         pCi->p_code[pCi->pc++] = k_POP_STR_N2;  // Strings always global for now
@@ -919,12 +931,12 @@ static void compile_var(uint8_t tok) {
 */
 static void compile_str8_var(void) {
     uint8_t tok = next();
-    if(tok != STRID) {
-        error("string identifier (ending with $) expected", pCi->a_buff);
+    if(tok != STRID && tok != ID) {
+        error("string identifier expected", pCi->a_buff);
         return;
     }
     uint16_t idx = pCi->sym_idx;
-    // Mark this variable as string type
+    // Mark this variable as string type (the '$' suffix is optional)
     a_Symbol[idx].type = STRID;
     match(EQ);
     compile_expression(e_STR);
@@ -1097,6 +1109,8 @@ static void compile_func(void) {
         // Set type: ARR for array refs, ID for int32, STRID for str8
         if(param_type == ARR) {
             a_Symbol[pCi->sym_idx].type = ARR;
+        } else if(param_type == STR8) {
+            a_Symbol[pCi->sym_idx].type = STRID;
         }
         param_indices[param_count] = pCi->sym_idx;
         //param_types[param_count] = param_type;
@@ -1997,6 +2011,7 @@ static type_t compile_comp_expr(void) {
             default: error("unknown operator", pCi->a_buff); break;
             }
         }
+        type1 = e_NUM;  // a comparison yields 0/1, also for strings
         op = lookahead();
     }
     return type1;
@@ -2266,7 +2281,8 @@ static type_t compile_factor(void) {
         break;
     case STRID: // string variable, like A$
         match(STRID);
-        pCi->p_code[pCi->pc++] = k_PUSH_VAR_N2;
+        // String parameters live on the stack frame and hold the string address
+        pCi->p_code[pCi->pc++] = a_Symbol[pCi->sym_idx].is_local ? k_PUSH_LOCAL_N2 : k_PUSH_VAR_N2;
         pCi->p_code[pCi->pc++] = a_Symbol[pCi->sym_idx].value;
         type = e_STR;
         break;

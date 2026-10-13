@@ -9,7 +9,7 @@ You are generating code for **NanoC**, a simple C-like language for embedded sys
 3. Use `{ }` for blocks, NOT `begin/end`
 4. Use `==` for equality, `!=` for inequality
 5. Keywords are lowercase: `func`, `int32`, `return`, `if`, `else`, `for`, `while`
-6. String variables MUST end with `$`: `name$`, `text$`
+6. String variables are declared with `str8`; do NOT use the old BASIC `$` suffix for variables and built-in functions (`name$`, `left$()`). Host functions whose name contains `$` (e.g. `sys$()`) keep it.
 7. No semicolons at end of statements (but `;` can separate multiple statements on one line)
 8. No floating-point - integers only (int32)
 
@@ -30,7 +30,7 @@ You are generating code for **NanoC**, a simple C-like language for embedded sys
 int32 x = 0           // signed 32-bit integer
 int32 x = 0xFF        // hex literal (0x prefix supported)
 int32 arr[100]        // array of 100 elements
-str8 name$ = "Hello"  // string (must end with $)
+str8 name = "Hello"   // string
 const MAX = 0x100     // constant can also use hex literals
 ```
 
@@ -160,23 +160,23 @@ Increment:  ++ --
 ### Output
 ```c
 printf("Value: %d\n", x)      // %d=signed int, %u=unsigned int, %s=string, %h=hex
-printf("Name: %s\n", name$)   // string output
+printf("Name: %s\n", name)    // string output
 // Escape sequences: \n=newline, \t=tab, \a=BEL/end-of-output, \\=backslash
 ```
 
 ### String Functions
 ```c
-len(s$)                    // length
-left$(s$, n)               // first n chars
-right$(s$, n)              // last n chars
-mid$(s$, start, len)       // substring (0-based)
-str$(n)                    // int to string
-hex$(n)                    // int to hex string
-instr(start, s$, find$)    // find substring (0-based, -1 if not found)
-string$(n, char$)          // repeat first char n times
+len(s)                     // length
+left(s, n)                 // first n chars
+right(s, n)                // last n chars
+mid(s, start, len)         // substring (0-based)
+str(n)                     // int to string
+hex(n)                     // int to hex string
+instr(start, s, find)      // find substring (0-based, -1 if not found)
+string(n, char)            // repeat first char n times
 ```
 
-**Note:** `mid$` and `instr` use 0-based indexing (like C).
+**Note:** `mid` and `instr` use 0-based indexing (like C).
 
 ### Byte Access (array memory)
 ```c
@@ -186,8 +186,8 @@ u16(arr, offset)           // read 16-bit
 u16(arr, offset, value)    // write 16-bit
 u32(arr, offset)           // read 32-bit
 u32(arr, offset, value)    // write 32-bit
-str2arr(arr, offset, s$)   // write string incl. terminating 0
-arr2str$(arr, offset)      // read 0-terminated string
+str2arr(arr, offset, s)    // write string incl. terminating 0
+arr2str(arr, offset)       // read 0-terminated string
 ```
 
 ### Other
@@ -248,5 +248,6 @@ func example(int32 param) {    // param is LOCAL
 - Parameters: max 8 per function
 - No float/double
 - No multi-dim arrays
+- At most 2 string function results (`left()`, `mid()`, `hex()`, `+`, ...) per statement; use `str8` variables for more
 - No function-local arrays (declare arrays globally or pass via `int32[]` parameter)
 - `arr[i]++` not supported, use `arr[i] = arr[i] + 1`

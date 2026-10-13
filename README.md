@@ -11,7 +11,7 @@ NanoC is derived from [NanoBasic](https://github.com/joe7575/nanobasic). While m
     // Variable declarations
     int32 x = 42
     int32 arr[10]
-    str8 name$ = "hello"
+    str8 name = "hello"
     const MAX = 0x100
 
     // Control flow (C-style blocks)
@@ -47,7 +47,7 @@ NanoC is derived from [NanoBasic](https://github.com/joe7575/nanobasic). While m
     ++, --   (increment/decrement)
 
     // Built-in functions
-    rnd, abs, len, val, mid$, left$, right$, str$, hex$, instr, string$, free
+    rnd, abs, len, val, mid, left, right, str, hex, instr, string, free
 ```
 
 Byte/Word access functions (optional):
@@ -60,8 +60,8 @@ Byte/Word access functions (optional):
     u32(arr, idx)        // Read 32-bit dword at byte offset idx
     u32(arr, idx, val)   // Write 32-bit dword at byte offset idx
     copy(dst, doff, src, soff, len)  // Copy len bytes (destination first)
-    str2arr(arr, idx, s$)            // Write string incl. terminating 0 at byte offset idx
-    arr2str$(arr, idx)               // Read 0-terminated string from byte offset idx
+    str2arr(arr, idx, s)             // Write string incl. terminating 0 at byte offset idx
+    arr2str(arr, idx)                // Read 0-terminated string from byte offset idx
 ```
 
 Supported data types are:
@@ -69,8 +69,10 @@ Supported data types are:
 - int32: Signed Integer, 32 bit (-2,147,483,648 to 2,147,483,647)
 - int32[]: Array (one dimension, up to 128 elements)
 - int32[] (parameter): Array reference passed to functions
-- str8: String variable (ends with $, up to 120 characters)
+- str8: String variable (up to 120 characters)
 - const: Constant (numeric only)
+
+The BASIC-style `$` suffix of older scripts (`name$`, `left$()`, `hex$()`, ...) is still supported.
 
 The compiler generates bytecode executed by the virtual machine.
 NanoC is designed to be small and fast for embedded applications.
@@ -184,6 +186,11 @@ Copyright (C) 2024-2026 Joachim Stolberg
 The software is licensed under the MIT license.
 
 ## History
+
+**2026-10-13 V2.3.9**
+- The `$` suffix is optional: `str8 name` and `left()`, `right()`, `mid()`, `str()`, `hex()`, `string()`, `arr2str()`; the `$` form remains supported
+- Fix: `str8` parameters read the global variable with the same index instead of the parameter; they are now read-only
+- Fix: string comparisons (`a == "x"`) had the result type string, so `if (a == "x")` failed with "type mismatch"
 
 **2026-10-13 V2.3.8**
 - Add `str2arr(arr, idx, s$)` and `arr2str$(arr, idx)` to copy strings into byte arrays and back

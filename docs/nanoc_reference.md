@@ -119,12 +119,14 @@ copy(buffer, 0, NULL, 0, 10)  // NULL as source reference
 
 Variable names must begin with a letter and may contain letters, digits, and underscores. Only the first 15 characters are significant.
 
-String variable names end with `$`:
+String variables are declared with `str8`:
 
 ```c
 int32 count = 0
-str8 name$ = "Hello"
+str8 name = "Hello"
 ```
+
+**Note:** Older scripts use the BASIC-style `$` suffix for string variables and string functions (`name$`, `left$()`, `hex$()`, ...). This form is still supported, so existing scripts keep working. `name` and `name$` are two different variables, so do not mix both forms for the same name.
 
 ### Array Variables
 
@@ -187,16 +189,16 @@ x = data[5]
 Strings can be concatenated with `+`:
 
 ```c
-str8 a$ = "Hello"
-str8 b$ = " World"
-str8 c$ = a$ + b$    // "Hello World"
+str8 a = "Hello"
+str8 b = " World"
+str8 c = a + b    // "Hello World"
 ```
 
 String comparisons use relational operators:
 
 ```c
-if (a$ == "Hello") { ... }
-if (a$ < b$) { ... }
+if (a == "Hello") { ... }
+if (a < b) { ... }
 ```
 
 ---
@@ -229,12 +231,14 @@ int32 data[10]       // array of 10 elements
 
 ### str8
 
-Declares a string variable (must end with `$`):
+Declares a string variable:
 
 ```c
-str8 name$ = "Hello"
-str8 empty$ = ""
+str8 name = "Hello"
+str8 empty = ""
 ```
+
+`str8` function parameters are read-only.
 
 ---
 
@@ -515,7 +519,7 @@ Formatted output (C-style):
 ```c
 printf("Value: %d\n", x)
 printf("Unsigned: %u\n", x)
-printf("Name: %s, Age: %d\n", name$, age)
+printf("Name: %s, Age: %d\n", name, age)
 printf("Hex: %h\n", value)
 ```
 
@@ -573,40 +577,40 @@ int32 dist = abs(a - b)   // absolute difference
 
 | Function | Description |
 |----------|-------------|
-| `len(s$)` | Length of string |
-| `left$(s$, n)` | Left n characters |
-| `right$(s$, n)` | Right n characters |
-| `mid$(s$, start, len)` | Substring (0-based index) |
-| `str$(n)` | Number to string |
-| `hex$(n)` | Number to hex string |
-| `instr(start, s$, find$)` | Find substring (0-based, returns -1 if not found) |
-| `string$(n, char$)` | Repeat first char of string n times |
+| `len(s)` | Length of string |
+| `left(s, n)` | Left n characters |
+| `right(s, n)` | Right n characters |
+| `mid(s, start, len)` | Substring (0-based index) |
+| `str(n)` | Number to string |
+| `hex(n)` | Number to hex string |
+| `instr(start, s, find)` | Find substring (0-based, returns -1 if not found) |
+| `string(n, char)` | Repeat first char of string n times |
 
-**Note:** `mid$` and `instr` use 0-based indexing (first character is position 0).
+**Note:** `mid` and `instr` use 0-based indexing (first character is position 0).
 
-**Important:** String functions (those ending with `$`) must always have their return value assigned to a `str8` variable. Calling them as standalone statements (without assignment) causes a syntax error:
+**Important:** The return value of a string function must be used, e.g. assigned to a `str8` variable. Calling it as a standalone statement causes a syntax error:
 
 ```c
-str8 result$ = left$(s$, 5)    // OK
-left$(s$, 5)                    // ERROR: syntax error
+str8 result = left(s, 5)    // OK
+left(s, 5)                  // ERROR: syntax error
 ```
 
 Examples:
 
 ```c
-str8 s$ = "Hello World"
-int32 l = len(s$)              // 11
-str8 h$ = left$(s$, 5)         // "Hello"
-str8 w$ = right$(s$, 5)        // "World"
-str8 o$ = mid$(s$, 6, 5)       // "World" (pos 6 = 'W')
-int32 pos = instr(0, s$, "o")  // 4 (first 'o' at position 4)
-int32 nf = instr(0, s$, "xyz") // -1 (not found)
-str8 num$ = str$(42)           // "42"
-str8 hx$ = hex$(255)           // "FF"
+str8 s = "Hello World"
+int32 l = len(s)               // 11
+str8 h = left(s, 5)            // "Hello"
+str8 w = right(s, 5)           // "World"
+str8 o = mid(s, 6, 5)          // "World" (pos 6 = 'W')
+int32 pos = instr(0, s, "o")   // 4 (first 'o' at position 4)
+int32 nf = instr(0, s, "xyz")  // -1 (not found)
+str8 num = str(42)             // "42"
+str8 hx = hex(255)             // "FF"
 
 // Repeat character
-str8 star$ = "*"
-str8 line$ = string$(10, star$)  // "**********"
+str8 star = "*"
+str8 line = string(10, star)   // "**********"
 ```
 
 ### Byte Access Functions
@@ -644,13 +648,13 @@ Strings and arrays:
 
 | Function | Description |
 |----------|-------------|
-| `str2arr(arr, idx, s$)` | Write string `s$` incl. terminating 0 at byte offset idx (`len(s$) + 1` bytes) |
-| `arr2str$(arr, idx)` | Read a 0-terminated string from byte offset idx (ends at the array end if there is no 0) |
+| `str2arr(arr, idx, s)` | Write string `s` incl. terminating 0 at byte offset idx (`len(s) + 1` bytes) |
+| `arr2str(arr, idx)` | Read a 0-terminated string from byte offset idx (ends at the array end if there is no 0) |
 
 ```c
 int32 rsp[8]
 str2arr(rsp, 3, "CANbridge")     // bytes 3..12: "CANbridge" + 0
-printf("%s\n", arr2str$(rsp, 3)) // CANbridge
+printf("%s\n", arr2str(rsp, 3))  // CANbridge
 ```
 
 ### Memory Functions
@@ -725,3 +729,4 @@ end
 - No floating-point numbers
 - No multi-dimensional arrays
 - No function-local array declarations (use global arrays or array reference parameters)
+- At most two temporary strings per statement: results of string functions and of `+` are kept in two alternating buffers, so a third one overwrites the first. Example: `printf("%s %s %s", left(s, 1), mid(s, 1, 1), right(s, 1))` prints the result of `right()` twice. Split the statement or assign intermediate results to `str8` variables.

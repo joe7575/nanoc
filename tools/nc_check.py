@@ -68,6 +68,9 @@ KEYWORDS = {
     "left$": LEFTS, "right$": RIGHTS, "mid$": MIDS,
     "len": LEN, "str$": STRS, "hex$": HEXS,
     "NULL": NIL, "string$": STRINGS,
+    # same functions without the BASIC '$' suffix
+    "arr2str": ARR2STRS, "left": LEFTS, "right": RIGHTS, "mid": MIDS,
+    "str": STRS, "hex": HEXS, "string": STRINGS,
     "const": NC_CONST, "instr": INSTR, "free": FREE, "rnd": RND,
     "abs": ABS,
     "printf": PRINTF, "dispatch": DISPATCH,
@@ -584,7 +587,8 @@ class NcChecker:
                 break
             pname = ptok.value if ptok.type == ID else ptok.text
             is_arr = (param_type == ARR)
-            self.sym_add(pname, ARR if is_arr else ID, is_local=True, is_array=is_arr)
+            ptype = ARR if is_arr else (STRID if param_type == STR8 else ID)
+            self.sym_add(pname, ptype, is_local=True, is_array=is_arr)
             self.local_vars.add(pname)
             param_count += 1
 
@@ -667,14 +671,19 @@ class NcChecker:
             self.sym_add(name, ID, is_local=self.in_func)
             if self.in_func:
                 self.local_vars.add(name)
+        elif info["type"] == STRID and info.get("is_local"):
+            self.error("string parameters are read-only", name)
 
         self.match(EQ)
         self.compile_expression()
 
     def compile_strid_assign(self, tok):
         name = tok.value if hasattr(tok, 'value') and tok.value else tok.text
-        if not self.sym_lookup(name):
+        info = self.sym_lookup(name)
+        if not info:
             self.sym_add(name, STRID)
+        elif info.get("is_local"):
+            self.error("string parameters are read-only", name)
         self.match(EQ)
         self.compile_expression()
 
@@ -705,8 +714,8 @@ class NcChecker:
 
     def compile_str8_var(self):
         tok = self.next()
-        if tok.type != STRID:
-            self.error("string identifier (ending with $) expected", tok.text)
+        if tok.type not in (STRID, ID):
+            self.error("string identifier expected", tok.text)
             return
         name = tok.value
         self.sym_add(name, STRID)
