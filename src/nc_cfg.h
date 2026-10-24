@@ -29,7 +29,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 //#define cfg_DEBUG_SUPPORT     // source level debugger: line/locals tables, k_DBG_TRAP_N1 (NB_HALTED)
 
 #define cfg_MAX_FOR_LOOPS       (4)   // nested FOR loops (2 values per FOR loop on the stack)
-#define cfg_STACK_SIZE          (32)  // value for stack size (expression, call stack)
+#define cfg_STACK_SIZE          (128) // value for stack size (expression, call stack)
 #define cfg_PARAMSTACK_SIZE     (8)   // value for parameter stack size
 #define cfg_NUM_VARS            (256) // in the range 8..256
 #define cfg_MAX_NUM_DATA        (200) // (list of constants)
