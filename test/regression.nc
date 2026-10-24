@@ -7,6 +7,8 @@ int32 b = 0
 int32 c = 0
 int32 i = 0
 int32 y = 0
+int32 v = 5
+doit(v)
 for i = 1 to 0 {
     a = a + 1
 }
@@ -15,6 +17,9 @@ for i = 1 to 3 {
 }
 for i = 3 to 1 step -1 {
     c = c + i
+}
+func doit(int32 x) {
+    printf("fwd %d\n", x)
 }
 func int32 add(int32 x, int32 y) {
     return x + y
