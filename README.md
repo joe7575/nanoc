@@ -187,6 +187,9 @@ The software is licensed under the MIT license.
 
 ## History
 
+**2026-10-26 V2.3.13**
+- Fix: a value-returning external function used as a statement inside a user function popped a local variable instead of the unused result, corrupting the function parameters
+
 **2026-10-13 V2.3.9**
 - The `$` suffix is optional: `str8 name` and `left()`, `right()`, `mid()`, `str()`, `hex()`, `string()`, `arr2str()`; the `$` form remains supported
 - Fix: `str8` parameters read the global variable with the same index instead of the parameter; they are now read-only

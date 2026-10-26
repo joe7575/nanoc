@@ -42,6 +42,11 @@ func int32 g() {
 }
 time()
 printf("bare xfunc\n")
+func int32 keep(int32 x) {
+    time()
+    return x
+}
+printf("keep %d\n", keep(7))
 int32 r = add(2, 3)
 printf("%d %d %d %d %d %s %d\n", a, b, c, r + add(1, 1), fib(6), greeting(), g())
 y = add(y, 1)
