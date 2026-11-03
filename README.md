@@ -187,8 +187,22 @@ The software is licensed under the MIT license.
 
 ## History
 
+**2026-11-03 V2.3.14**
+- Fix: `str8` functions could not be used in expressions (`str8 s = f()` failed with "type mismatch"); a function without return value in an expression is now a compile error
+- Fix: a function called before its definition shared its variable index with the next global variable
+
 **2026-10-26 V2.3.13**
 - Fix: a value-returning external function used as a statement inside a user function popped a local variable instead of the unused result, corrupting the function parameters
+
+**2026-10-24 V2.3.12**
+- Value-returning external functions can be called as a statement, the result is discarded
+
+**2026-10-24 V2.3.11**
+- Functions with return value can be used in expressions (`int32 x = add(1, 2) * 3`); the function must be defined before the call
+- An empty `for` range skips the body (`start > end` with positive step, `start < end` with negative step)
+- Fix: only real forward calls use the forward-declaration list
+- Fix: `nc_reset()` also resets frame pointer, return value and loop counter
+- Host build (`nc_cfg.h`): 8 nested `for` loops, stack size 128
 
 **2026-10-13 V2.3.9**
 - The `$` suffix is optional: `str8 name` and `left()`, `right()`, `mid()`, `str()`, `hex()`, `string()`, `arr2str()`; the `$` form remains supported

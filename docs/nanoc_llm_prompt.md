@@ -249,5 +249,6 @@ func example(int32 param) {    // param is LOCAL
 - No float/double
 - No multi-dim arrays
 - At most 2 string function results (`left()`, `mid()`, `hex()`, `+`, ...) per statement; use `str8` variables for more
+- Functions used in an expression must be defined before the call
 - No function-local arrays (declare arrays globally or pass via `int32[]` parameter)
 - `arr[i]++` not supported, use `arr[i] = arr[i] + 1`

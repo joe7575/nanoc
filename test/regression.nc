@@ -2,6 +2,8 @@
 // - empty for-loops must not run the body (global and local loop variable)
 // - user functions with return values in expressions (incl. recursion, str8)
 // - many calls to an already defined function (forward-declaration limit)
+// - a forward-called function must not share its variable index with a later variable
+// - str8 function result assigned to a variable
 int32 a = 0
 int32 b = 0
 int32 c = 0
@@ -90,4 +92,11 @@ y = add(y, 1)
 y = add(y, 1)
 y = add(y, 1)
 printf("%d\n", y)
+fwd2()
+int32 keepme = 5
+func fwd2() {
+}
+int32 other = 7
+str8 gs = greeting()
+printf("vars %d %d %s\n", keepme, other, gs)
 end
