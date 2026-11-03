@@ -187,6 +187,9 @@ The software is licensed under the MIT license.
 
 ## History
 
+**2026-11-03 V2.3.15**
+- Fix: `for` loops with a global loop variable ended after the first pass when the range was negative (`for i = -3 to 1`): unsigned compare in `k_NEXT_N4`
+
 **2026-11-03 V2.3.14**
 - Fix: `str8` functions could not be used in expressions (`str8 s = f()` failed with "type mismatch"); a function without return value in an expression is now a compile error
 - Fix: a function called before its definition shared its variable index with the next global variable
