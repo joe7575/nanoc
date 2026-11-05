@@ -54,6 +54,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #define kKVS_SET            (NB_XFUNC + 10)
 #define kKVS_GET            (NB_XFUNC + 11)
 #define kFIRE_ON_CAN        (NB_XFUNC + 12)
+#define kPAYLOAD            (NB_XFUNC + 13)
 
 // Memory: 8 bytes header + 256 entries * 8 bytes each = 2056 bytes per store
 #define KVS_MEM_SIZE 2056
@@ -142,6 +143,7 @@ int main(int argc, char* argv[]) {
     CHECK(nc_define_external_function("kvs_get", 2, (uint8_t[]){NB_NUM, NB_NUM}, NB_NUM) == kKVS_GET);
     // Event trigger function: fire_on_can(id, data1, data2) -> calls on_can: label
     CHECK(nc_define_external_function("fire_on_can", 4, (uint8_t[]){NB_NUM, NB_NUM, NB_NUM, NB_REF}, NB_NONE) == kFIRE_ON_CAN);
+    CHECK(nc_define_external_function("payload", 3, (uint8_t[]){NB_NUM, NB_NUM, NB_REF_STR}, NB_NONE) == kPAYLOAD);
 #endif
 
     void *instance = nc_create();
@@ -351,6 +353,11 @@ int main(int argc, char* argv[]) {
                 } else {
                     nc_print("Warning: on_can handler not defined\n");
                 }
+            } else if(res == NB_XFUNC + 13) {
+                // payload(number, topic, [array|string])
+                (void)nc_pop_num(instance);
+                (void)nc_pop_num(instance);
+                (void)nc_pop_num(instance);
             } else if(res >= NB_XFUNC) {
                 nc_print("Unknown external function\n");
             }

@@ -49,6 +49,16 @@ func int32 keep(int32 x) {
     return x
 }
 printf("keep %d\n", keep(7))
+int32 mp[1]
+int32 mi = 2
+printf("mod %d %d\n", mi mod 3, mi % 3)
+int32 mp2[1]
+func str8 mstr(int32 x) {
+    return "x"
+}
+payload(1, 2, mp2)
+payload(1, 2, mstr(1))
+printf("payloads ok\n")
 int32 r = add(2, 3)
 printf("%d %d %d %d %d %s %d\n", a, b, c, r + add(1, 1), fib(6), greeting(), g())
 y = add(y, 1)

@@ -187,6 +187,10 @@ The software is licensed under the MIT license.
 
 ## History
 
+**2026-11-05 V2.3.16**
+- Fix: `variable mod N` used the symbol of the `mod` keyword instead of the variable when an array was declared (the lookahead overwrote the variable index)
+- Add `NB_REF_STR` external-function parameter type (array reference or string) and reject scalar payloads at compile time
+
 **2026-11-03 V2.3.15**
 - Fix: `for` loops with a global loop variable ended after the first pass when the range was negative (`for i = -3 to 1`): unsigned compare in `k_NEXT_N4`
 
