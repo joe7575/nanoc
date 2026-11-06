@@ -59,6 +59,7 @@ func str8 mstr(int32 x) {
 payload(1, 2, mp2)
 payload(1, 2, mstr(1))
 printf("payloads ok\n")
+printf("width [%2d][%02d]\n", 5, 5)
 int32 r = add(2, 3)
 printf("%d %d %d %d %d %s %d\n", a, b, c, r + add(1, 1), fib(6), greeting(), g())
 y = add(y, 1)

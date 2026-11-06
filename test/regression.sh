@@ -7,6 +7,7 @@ echo "$out" | grep -q "bare xfunc" || { echo "regression failed: bare xfunc"; ex
 echo "$out" | grep -q "keep 7" || { echo "regression failed: bare xfunc in function"; exit 1; }
 echo "$out" | grep -q "mod 2 2" || { echo "regression failed: mod with array"; exit 1; }
 echo "$out" | grep -q "payloads ok" || { echo "regression failed: ref/string payload"; exit 1; }
+echo "$out" | grep -Fq "width [ 5][05]" || { echo "regression failed: printf width"; exit 1; }
 echo "$out" | grep -q "0 6 6 7 8 hi 0" || { echo "regression failed: for/expression"; exit 1; }
 echo "$out" | grep -q "^40$" || { echo "regression failed: forward declarations"; exit 1; }
 echo "$out" | grep -q "vars 5 7 hi" || { echo "regression failed: forward call variable index / str8 result"; exit 1; }

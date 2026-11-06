@@ -187,6 +187,11 @@ The software is licensed under the MIT license.
 
 ## History
 
+**2026-11-06 V2.3.17**
+- `printf` supports width and zero padding (`%2d`, `%02d`, `%-3d`, `%4s`)
+- Clearer compile error for local/parameter `str8` variables
+- nanoclib: `millis()` restarts at 0 when a program is loaded
+
 **2026-11-05 V2.3.16**
 - Fix: `variable mod N` used the symbol of the `mod` keyword instead of the variable when an array was declared (the lookahead overwrote the variable index)
 - Add `NB_REF_STR` external-function parameter type (array reference or string) and reject scalar payloads at compile time
